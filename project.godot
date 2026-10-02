@@ -55,3 +55,11 @@ song_time={
 "type": "float",
 "value": 0.0
 }
+dither={
+"type": "float",
+"value": 1.0
+}
+print_scale={
+"type": "float",
+"value": 1.0
+}

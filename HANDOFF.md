@@ -2,6 +2,39 @@
 
 Newest entry first. Each entry covers one working slice: what was decided, how it was checked, and the exact next step.
 
+## 2026-10-02 — 1080p, and a version without the halftone dither
+
+**What changed**
+- **The owner asked:** can the film be 1080p, and can I see it with no dither (halftone dots)?
+- **Rendering without Movie Maker:**
+  - `scripts/film.gd` now renders the shot into an offscreen SubViewport of `size=WxH` (default 1280×720).
+  - It saves each frame as a PNG when `RenderingServer.frame_post_draw` fires, after 3 warm-up draws before the first frame.
+  - The 1280×720 window only shows a scaled preview.
+  - Why: Movie Maker records the window itself. A test with the root viewport's content scale set to 1920×1080 still wrote 1280×720 PNGs, and a 1080p window can't fit on this Mac's 1920×1080 screen.
+  - Frames are lossless too, where the old AVI path was MJPEG.
+- **`tools/render.sh`:**
+  - Encodes the PNG frames (`frame%06d.png`) with the song.
+  - Takes `size=` and `dither=`.
+  - Checks the frame count and size, then deletes the frames (`KEEP_FRAMES=1` keeps them).
+- **Two new global shader parameters:**
+  - `print_scale` (output height ÷ 720) keeps halftone dots and ink lines the same size in frame at any resolution.
+  - `dither` (1 or 0). At 0, `halftone()` returns the coverage itself, so every shade becomes a flat, solid tone and the sky's galaxy band goes soft.
+- **`tools/check_sync.py`** scales the flash box to the video's width.
+
+**How it was checked**
+- **Sync on the new pipeline:** the beat-flash render passes `check_sync.py`, identical to Movie Maker's result.
+  - 600 frames; 41 flashes for 41 beats.
+  - Each flash lands 2.6–33.1 ms after its beat.
+  - The kicks in the muxed audio sit a median −1.4 ms from their beats.
+- **1080p:** a 1080p still measured 1920×1080. Side-by-side crops with and without dither looked as intended.
+- **Deliverables:** `renders/sample-1080.mp4` and `renders/sample-1080-nodither.mp4`, both 0:06–0:26.
+
+**Next step**
+- The owner picks 720p or 1080p, and dither or flat.
+- Then the next part of the story.
+
+---
+
 ## 2026-10-02 — The ring, the print look and the palette journey
 
 **What changed**

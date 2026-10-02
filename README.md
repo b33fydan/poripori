@@ -2,7 +2,7 @@
 
 A music video for an instrumental song, telling the story of the Arecibo Message: the 1,679-bit picture humanity beamed from Puerto Rico toward the globular cluster M13 on 16 November 1974.
 
-A little voxel astronaut surfs up through the night sky, leaving a trail of coloured cubes, while the message stands behind them as a giant sculpture of cubes. The film is rendered from Godot 4.6 with Movie Maker; ffmpeg muxes in the song untouched.
+A little voxel astronaut surfs a Saturn-like ring of voxel tiles round the message, which stands as a giant sculpture of cubes, painting a rainbow track as it goes. The look is printed: flat colours, halftone and ink lines, in a palette that changes with each chapter of the message. The film is rendered from Godot 4.6 to lossless PNG frames, offscreen at any size (720p or 1080p); ffmpeg encodes them with the song, untouched.
 
 ## Layout
 

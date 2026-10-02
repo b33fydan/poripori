@@ -26,7 +26,7 @@ vec3 normal_at(vec2 uv) {
 }
 
 void fragment() {
-	vec2 px = width / VIEWPORT_SIZE;
+	vec2 px = width * print_scale / VIEWPORT_SIZE;
 	vec2 offsets[4] = vec2[](vec2(-px.x, 0.0), vec2(px.x, 0.0), vec2(0.0, -px.y), vec2(0.0, px.y));
 	float dc = texture(depth_tex, SCREEN_UV).r;
 	float sum = 0.0;

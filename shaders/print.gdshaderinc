@@ -8,11 +8,17 @@ global uniform vec4 accent;
 global uniform vec3 key_dir;
 global uniform float halftone_px;
 global uniform float song_time;
+global uniform float dither;       // 1: halftone dots; 0: flat, solid tones
+global uniform float print_scale;  // output height / 720, so dots and lines keep their size in frame
 
 // A 45-degree dot screen fixed to the frame; each dot covers `coverage`
-// (0 to 1) of its cell. Returns 1 inside a dot.
+// (0 to 1) of its cell. Returns 1 inside a dot. With dither off it returns
+// the coverage itself, so callers mix in a flat, solid tone instead.
 float halftone(vec2 frag, float coverage) {
-	vec2 p = mat2(vec2(0.70710678, 0.70710678), vec2(-0.70710678, 0.70710678)) * frag / halftone_px;
+	if (dither < 0.5) {
+		return clamp(coverage, 0.0, 1.0);
+	}
+	vec2 p = mat2(vec2(0.70710678, 0.70710678), vec2(-0.70710678, 0.70710678)) * frag / (halftone_px * print_scale);
 	vec2 f = fract(p) - 0.5;
 	float radius = sqrt(clamp(coverage, 0.0, 1.0) / 3.14159265) * 1.05;
 	float d = length(f);

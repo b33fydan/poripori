@@ -33,7 +33,8 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
   - telescope, purple.
   The intro, before the message begins, is a plain blue night. The B-roll cut-aways will use light paper in the same chapter colours.
 - **On-screen text:** no numbers or words for now.
-- **Aspect and size:** 16:9 at 1280×720, 30 fps.
+- **Aspect and size:** 16:9 at 30 fps. 1280×720 was agreed first. 1920×1080 now renders too (2026-10-02); the final size is the owner's call.
+- **Dither:** `dither=0` renders flat, solid tones instead of halftone dots, for comparison. Which one the film uses is the owner's call.
 - **Where it's posted:** X. The owner has Premium, so the full 3:12 song fits.
 
 ## The structure

@@ -1,26 +1,39 @@
 extends SceneTree
 
-# Renders a shot of the film. Every frame shows one song time, from + n / FPS,
-# so any moment can be re-rendered exactly. The audio is muxed in afterwards
-# by tools/render.sh, untouched; this renders picture only.
+# Renders a shot of the film to PNG frames. Every frame shows one song time,
+# from + n / FPS, so any moment can be re-rendered exactly. The audio is
+# muxed in afterwards by tools/render.sh, untouched; this renders picture only.
 #
-#   Godot --path . --resolution 1280x720 --fixed-fps 30 \
-#     --write-movie renders/<name>.avi --script res://scripts/film.gd -- \
-#     shot=sample song=lost-in-the-void from=6 to=26 [beats]
+#   Godot --path . --resolution 1280x720 --script res://scripts/film.gd -- \
+#     shot=sample song=lost-in-the-void from=6 to=26 frames=<dir> \
+#     [size=1920x1080] [dither=0] [beats]
 #
-# `beats` draws a flash on every beat (bigger and red on the bar's first) for
-# checking sync. `stills=7.5,16,22 out=<dir>` saves PNG stills at those song
-# times instead, then quits; no Movie Maker needed.
+# The shot renders into an offscreen viewport of `size` (default 1280x720),
+# and each frame is saved the moment it has been drawn. The window only
+# shows a preview, so it can stay small: Movie Maker records the window
+# itself, and a 1080p window gets maximized and misframed on this Mac's
+# 1920x1080 screen. Halftone dots and ink lines scale with `size`.
+#
+# `dither=0` swaps the halftone dots for flat, solid tones. `beats` draws a
+# flash on every beat (red on the bar's first) for checking sync.
+# `stills=7.5,16,22 out=<dir>` saves PNG stills at those song times instead.
 
 const SongTimelineScript := preload("res://scripts/song_timeline.gd")
 const FPS := 30.0
+const WARM_UP := 3  # frames drawn before the first one is kept
 
 var _timeline
 var _shot: Node
+var _viewport: SubViewport
+var _size := Vector2i(1280, 720)
 var _from := 0.0
 var _to := 0.0
+var _total := 0
 var _frame := 0
+var _warm := 0
+var _pending := ""  # where the frame being drawn should be saved
 var _stills: Array = []
+var _frames_dir := ""
 var _out_dir := ""
 var _flash: ColorRect
 var _label: Label
@@ -28,12 +41,19 @@ var _label: Label
 
 func _initialize() -> void:
 	var args := _args()
+	if args.has("size"):
+		var wh := str(args["size"]).split("x")
+		_size = Vector2i(int(wh[0]), int(wh[1]))
+	RenderingServer.global_shader_parameter_set("print_scale", _size.y / 720.0)
+	RenderingServer.global_shader_parameter_set("dither", 0.0 if str(args.get("dither", "1")) == "0" else 1.0)
 	_timeline = SongTimelineScript.load_song(str(args.get("song", "lost-in-the-void")))
 	if _timeline == null:
 		quit(1)
 		return
 	_from = float(args.get("from", "0"))
 	_to = float(args.get("to", str(_timeline.duration)))
+	_total = int(round((_to - _from) * FPS))
+	_build_viewport()
 	var shot_path := "res://scripts/shots/%s.gd" % str(args.get("shot", "sample"))
 	var shot_script := load(shot_path) as GDScript
 	if shot_script == null or not shot_script.can_instantiate():
@@ -41,7 +61,7 @@ func _initialize() -> void:
 		quit(1)
 		return
 	_shot = shot_script.new()
-	root.add_child(_shot)
+	_viewport.add_child(_shot)
 	# The shot sees the same key=value arguments, and how far it must reach.
 	var reach := _to
 	if args.has("stills"):
@@ -56,10 +76,14 @@ func _initialize() -> void:
 	if args.has("stills"):
 		for value in str(args["stills"]).split(","):
 			_stills.append(float(value))
-		_out_dir = str(args.get("out", "res://renders/stills"))
-		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_out_dir))
-	print("[Film] %s, song %s, %.3f to %.3f s (%d frames)" % [shot_path, _timeline.song_id, _from, _to, int(round((_to - _from) * FPS))])
+		_out_dir = ProjectSettings.globalize_path(str(args.get("out", "res://renders/stills")))
+		DirAccess.make_dir_recursive_absolute(_out_dir)
+	else:
+		_frames_dir = ProjectSettings.globalize_path(str(args.get("frames", "res://renders/frames")))
+		DirAccess.make_dir_recursive_absolute(_frames_dir)
+	print("[Film] %s, song %s, %.3f to %.3f s (%d frames) at %dx%d" % [shot_path, _timeline.song_id, _from, _to, _total, _size.x, _size.y])
 	process_frame.connect(_on_frame)
+	RenderingServer.frame_post_draw.connect(_on_drawn)
 
 
 func _args() -> Dictionary:
@@ -70,32 +94,54 @@ func _args() -> Dictionary:
 	return out
 
 
+# The film renders offscreen at full size; the window shows it scaled down.
+func _build_viewport() -> void:
+	_viewport = SubViewport.new()
+	_viewport.size = _size
+	_viewport.own_world_3d = true
+	_viewport.msaa_3d = Viewport.MSAA_2X
+	_viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
+	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	root.add_child(_viewport)
+	var preview := TextureRect.new()
+	preview.texture = _viewport.get_texture()
+	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	preview.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(preview)
+
+
+# Pose a frame before it's drawn; _on_drawn saves it once the GPU has drawn it.
 func _on_frame() -> void:
+	if not _pending.is_empty():
+		return
 	if not _stills.is_empty():
-		_on_still_frame()
-		return
-	# The frame that calls quit() still renders and is recorded, so quit on
-	# the frame that poses the last moment, not the one after it.
-	_pose(_from + _frame / FPS)
-	_frame += 1
-	if _frame >= int(round((_to - _from) * FPS)):
-		quit()
-
-
-# A still is posed, given three frames to render, then saved.
-func _on_still_frame() -> void:
-	var index := _frame / 4
-	var step := _frame % 4
-	if index >= _stills.size():
-		quit()
-		return
-	var t: float = _stills[index]
-	if step == 0:
+		if _frame >= _stills.size():
+			quit()
+			return
+		var t: float = _stills[_frame]
 		_pose(t)
-	elif step == 3:
-		var path := "%s/still-%06.2f.png" % [ProjectSettings.globalize_path(_out_dir), t]
-		root.get_texture().get_image().save_png(path)
-		print("[Film] saved %s" % path)
+		if _warm >= WARM_UP:
+			_pending = "%s/still-%06.2f.png" % [_out_dir, t]
+		_warm += 1
+		return
+	if _frame >= _total:
+		quit()
+		return
+	_pose(_from + _frame / FPS)
+	if _frame > 0 or _warm >= WARM_UP:
+		_pending = "%s/frame%06d.png" % [_frames_dir, _frame]
+	_warm += 1
+
+
+func _on_drawn() -> void:
+	if _pending.is_empty():
+		return
+	_viewport.get_texture().get_image().save_png(_pending)
+	if not _stills.is_empty():
+		print("[Film] saved %s" % _pending)
+		_warm = 0
+	_pending = ""
 	_frame += 1
 
 
@@ -108,14 +154,17 @@ func _pose(t: float) -> void:
 		_label.text = "bar %d · beat %d · %.3f s" % [int(floor(_timeline.bar(t))), int(floor(fposmod(_timeline.beat(t), 4.0))) + 1, t]
 
 
+# Drawn in the film's own viewport so it's in the saved frames; laid out on a
+# 1280x720 grid and scaled to the render size.
 func _build_beat_flash() -> void:
+	var scale := _size.y / 720.0
 	var layer := CanvasLayer.new()
-	root.add_child(layer)
+	_viewport.add_child(layer)
 	_flash = ColorRect.new()
-	_flash.position = Vector2(1180, 20)
-	_flash.size = Vector2(80, 80)
+	_flash.position = Vector2(1180, 20) * scale
+	_flash.size = Vector2(80, 80) * scale
 	layer.add_child(_flash)
 	_label = Label.new()
-	_label.position = Vector2(20, 20)
-	_label.add_theme_font_size_override("font_size", 22)
+	_label.position = Vector2(20, 20) * scale
+	_label.add_theme_font_size_override("font_size", int(22 * scale))
 	layer.add_child(_label)
