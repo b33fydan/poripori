@@ -4,10 +4,35 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
 
 ## The look
 
-- **The hero:** a little voxel astronaut, built like AgentVille's farmhands (box body, swinging limbs, a voxel face, now behind a visor). It surfs through the galaxy on a board that leaves a trail of coloured cubes.
+- **The hero:** a little voxel astronaut, built like AgentVille's farmhands (box body, swinging limbs, a voxel face in an open visor). It surfs on a board that leaves a trail of colours behind it.
 - **The sky:** night. Deep space, a faint galaxy band, voxel stars.
-- **The message:** in the background stands the Arecibo Message as a giant sculpture of voxel cubes.
-- **The camera:** the astronaut surfs upward toward the sculpture, seen in third person from behind.
+- **The message:** the Arecibo Message stands as a giant sculpture of voxel cubes.
+- **The ring (owner's idea, 2026-10-02):** a giant ring like Saturn's circles the sculpture, and the astronaut surfs on it.
+  - The ring is made of voxel tiles, banded like Saturn's rings, with a gap like the Cassini Division.
+  - It passes just under the message's human figure (row 55), so the Solar System and the telescope hang below it.
+  - A swell travels round the ring with the astronaut, who rides its face.
+  - The trail paints the tiles in rainbow colours. Tiles dip under the board and wobble back, and cubes spray up behind it.
+- **The camera:** third person from behind the astronaut, toward the sculpture. It rides just outside the ring, looking in past the astronaut's back, and the board slides across the frame. The sculpture turns to face the camera, so it always reads correctly.
+
+## The style reference
+
+- **What:** FALL-LINIE, a snowboarding game by Grotesk. The owner's clip is at `~/Downloads/surfing.mp4`; a playable remux is at `~/Downloads/surfing-fixed.mp4`.
+- **Taken from it:** the visual grammar only, never its branding or font:
+  - a printed look: flat colours, halftone shading, ink outlines;
+  - one giant landmark at the vanishing point, with a big disc behind it (our moon);
+  - a low chase camera;
+  - a track and spray behind the board;
+  - a palette that changes from run to run.
+- **The palette journey:** each chapter of the message gets its own night, tinted with that chapter's colour from the coloured version of the message (`scripts/palette.gd`):
+  - numbers, silver;
+  - elements, violet;
+  - formulas, green;
+  - DNA, blue;
+  - human, red;
+  - Solar System, gold;
+  - telescope, purple.
+  The intro, before the message begins, is a plain blue night. The B-roll cut-aways will use light paper in the same chapter colours.
+- **On-screen text:** no numbers or words for now.
 - **Aspect and size:** 16:9 at 1280×720, 30 fps.
 - **Where it's posted:** X. The owner has Premium, so the full 3:12 song fits.
 
@@ -17,6 +42,7 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
 - **The cuts:** each chapter of the message gets a sped-up B-roll that explains it visually, then the film cuts back to the astronaut.
 - **1:04, the reach:** the song turns mellow (bar 32, 63.53 s). In slow motion the astronaut reaches up with one hand, and the Claude mascot is revealed bit by bit. Short B-roll cuts fly the camera low over the human figure in the middle of the message as the build-up rises.
 - **1:36, the touch:** the drop (bar 48, 95.27 s). The astronaut and the mascot touch hands as the beat kicks back in. From then on the mascot rides at the board's tip, pointing forward.
+- **The voice (from the touch onward):** "Gervis", the owner's voice character, speaks in the background like a PA or a radio transmission. The owner will write the inspiring words. Only then does text appear on screen: the spoken words, as captions.
 
 ## The mascot
 

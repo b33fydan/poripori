@@ -11,12 +11,11 @@ extends Node3D
 # Bits and section rows come from data/arecibo/, checked against sources
 # listed in data/arecibo/SOURCES.md.
 
-const VoxelShader := preload("res://shaders/voxel.gdshader")
+const PrintShader := preload("res://shaders/print.gdshader")
 const ROWS := 73
 const COLUMNS := 23
 const BITS_PATH := "res://data/arecibo/bits.txt"
 const SECTIONS_PATH := "res://data/arecibo/sections.json"
-const UNLIT := Color("#232a40")
 
 var pitch := 3.0
 var multimesh: MultiMesh
@@ -44,10 +43,7 @@ func _init(cube_pitch := 3.0) -> void:
 	var cube := BoxMesh.new()
 	cube.size = Vector3.ONE * pitch * 0.86
 	var material := ShaderMaterial.new()
-	material.shader = VoxelShader
-	material.set_shader_parameter("glow_energy", 1.6)
-	material.set_shader_parameter("unshaded_mix", 0.15)
-	material.set_shader_parameter("roughness_value", 0.6)
+	material.shader = PrintShader
 	cube.material = material
 	multimesh = MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
@@ -84,8 +80,9 @@ func height() -> float:
 
 # The cubes light in a wave from the top row down, starting at `lit_at` and
 # reaching the bottom `wave` seconds later; each pops a little as it lights.
-# Before that they hang dark, faintly lit by the sky. `pulse` breathes on the beat.
-func update(t: float, lit_at: float, wave: float, pulse: float) -> void:
+# Before that they hang as `unlit`, a shade of the night. Each prints flat and
+# bright for a moment as it lights. `pulse` swells the cubes on the beat.
+func update(t: float, lit_at: float, wave: float, pulse: float, unlit: Color) -> void:
 	for i in range(_cubes.size()):
 		var cube: Array = _cubes[i]
 		var row: int = cube[0]
@@ -93,10 +90,9 @@ func update(t: float, lit_at: float, wave: float, pulse: float) -> void:
 		var since := t - lit_time
 		var on := smoothstep(0.0, 0.18, since)
 		var flash := exp(-maxf(since, 0.0) * 5.0) * on
-		var pop := 1.0 + 0.35 * flash - 0.12 * (1.0 - on)
+		var pop := 1.0 + 0.35 * flash - 0.12 * (1.0 - on) + 0.06 * pulse * on
 		multimesh.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ONE * pop), home(row, cube[1])))
-		# Unlit, a cube is a dark slate silhouette; lit, its region's colour.
 		var base: Color = cube[3]
-		var color := UNLIT.lerp(base, on).srgb_to_linear()
-		color.a = 0.02 + on * (0.9 + 0.35 * pulse) + flash * 1.4
+		var color := unlit.lerp(base, on).srgb_to_linear()
+		color.a = 1.0 if flash > 0.35 else 0.0
 		multimesh.set_instance_color(i, color)

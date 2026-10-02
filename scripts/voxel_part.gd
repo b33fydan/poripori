@@ -9,12 +9,12 @@ extends Node3D
 # Cells are in voxel units; `pivot` (also in voxel units) sits at the node's
 # origin, so a limb can rotate about its joint.
 
-const VoxelShader := preload("res://shaders/voxel.gdshader")
+const PrintShader := preload("res://shaders/print.gdshader")
 
 var unit := 0.05
 var pivot := Vector3.ZERO
 var cells := {}  # Vector3i -> Color (sRGB)
-var glows := {}  # Vector3i -> how much that cube glows, for the few that do
+var glows := {}  # Vector3i -> > 0 for the few cubes that print flat and bright
 var multimesh: MultiMesh
 var material: ShaderMaterial
 var _order: Array = []  # cells in instance order, after build()
@@ -53,7 +53,7 @@ func paint(cell: Vector3i, color: Color, glow := 0.0) -> VoxelPart:
 
 
 # Only cells with an open face are drawn; hidden insides would never show.
-func build(glow_energy := 0.0) -> VoxelPart:
+func build() -> VoxelPart:
 	_order.clear()
 	for cell in cells.keys():
 		var c: Vector3i = cell
@@ -65,8 +65,7 @@ func build(glow_energy := 0.0) -> VoxelPart:
 	var cube := BoxMesh.new()
 	cube.size = Vector3.ONE * unit
 	material = ShaderMaterial.new()
-	material.shader = VoxelShader
-	material.set_shader_parameter("glow_energy", glow_energy)
+	material.shader = PrintShader
 	cube.material = material
 	multimesh = MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
@@ -98,5 +97,5 @@ func _shade(cell: Vector3i, color: Color, glow: float) -> Color:
 	var shift := (float(h) / 1000.0 - 0.5) * 0.05
 	var shaded := Color(color.r + shift, color.g + shift, color.b + shift).clamp()
 	var linear := shaded.srgb_to_linear()
-	linear.a = glow
+	linear.a = 1.0 if glow > 0.0 else 0.0
 	return linear

@@ -14,8 +14,8 @@ const U := 0.05
 
 const SUIT := Color("#f1f0ea")
 const SUIT_SHADE := Color("#d9dbe0")
-const TRIM := Color("#8d93a3")
-const DARK := Color("#3b404c")
+const TRIM := Color("#6b7396")
+const DARK := Color("#2c3156")
 const ACCENT := Color("#5e8ec7")  # AgentVille's farmhand blue
 const GOLD := Color("#f2cf6b")    # AgentVille's accent yellow
 const SKIN := Color("#ffd8aa")
@@ -87,7 +87,7 @@ func _build_board() -> void:
 	# A small fin under the tail.
 	board.box(Vector3i(-11, -4, 0), Vector3i(-8, -2, 1), ACCENT)
 	board.build()
-	board_glow.build(2.0)
+	board_glow.build()
 	add_child(board)
 	add_child(board_glow)
 
@@ -116,7 +116,7 @@ func _build_body() -> void:
 	torso.box(Vector3i(-4, 8, -6), Vector3i(4, 9, -3), TRIM)
 	torso.box(Vector3i(-3, 0, -5), Vector3i(-1, 1, -4), DARK)
 	torso.box(Vector3i(1, 0, -5), Vector3i(3, 1, -4), DARK)
-	torso.build(1.5)
+	torso.build()
 	rider.add_child(torso)
 	rider.add_child(leg_l)
 	rider.add_child(leg_r)
@@ -183,7 +183,7 @@ func _build_helmet() -> void:
 	helmet.add_child(shell)
 	antenna_tip = _part(Vector3(0.0, 0.0, 0.0))
 	antenna_tip.paint(Vector3i(3, 13, 0), GOLD, 1.0)
-	antenna_tip.build(3.0)
+	antenna_tip.build()
 	helmet.add_child(antenna_tip)
 	# The farmhand's face inside, right behind the glass.
 	var head := _part(Vector3(0.0, 0.0, 0.0))
@@ -195,30 +195,17 @@ func _build_helmet() -> void:
 	head.paint(Vector3i(-4, 4, 3), BLUSH)
 	head.paint(Vector3i(3, 4, 3), BLUSH)
 	head.box(Vector3i(-1, 3, 3), Vector3i(1, 4, 4), FACE)               # mouth
+	# The face prints flat, so it reads from any angle.
+	for cell in head.cells.keys():
+		head.glows[cell] = 1.0
 	head.build()
 	helmet.add_child(head)
-	# The glass: one pane (cubes would show seams through each other).
-	var glass := MeshInstance3D.new()
-	glass.name = "Visor"
-	var pane := BoxMesh.new()
-	pane.size = Vector3(8.0 * U, 6.0 * U, 0.6 * U)
-	var glass_material := StandardMaterial3D.new()
-	glass_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	glass_material.albedo_color = Color(0.45, 0.7, 1.0, 0.28)
-	glass_material.metallic = 0.2
-	glass_material.roughness = 0.04
-	glass_material.rim_enabled = true
-	glass_material.rim = 0.6
-	pane.material = glass_material
-	glass.mesh = pane
-	glass.position = Vector3(0.0, 6.0 * U, 4.7 * U)
-	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	helmet.add_child(glass)
-	# A glint across the glass's upper corner.
+	# The visor is open: the print look's ink pass draws over the finished
+	# opaque frame, so glass would vanish under it. A glint says "glass".
 	var glint := _part(Vector3(0.0, 0.0, 0.0))
 	glint.paint(Vector3i(-3, 8, 5), Color.WHITE, 0.6)
 	glint.paint(Vector3i(-2, 7, 5), Color.WHITE, 0.6)
-	glint.build(1.0)
+	glint.build()
 	glint.scale = Vector3(0.6, 0.6, 0.2)
 	glint.position = Vector3(-1.2 * U, 2.6 * U, 3.9 * U)
 	helmet.add_child(glint)

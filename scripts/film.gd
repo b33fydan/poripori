@@ -35,8 +35,21 @@ func _initialize() -> void:
 	_from = float(args.get("from", "0"))
 	_to = float(args.get("to", str(_timeline.duration)))
 	var shot_path := "res://scripts/shots/%s.gd" % str(args.get("shot", "sample"))
-	_shot = (load(shot_path) as GDScript).new()
+	var shot_script := load(shot_path) as GDScript
+	if shot_script == null or not shot_script.can_instantiate():
+		push_error("[Film] can't load %s" % shot_path)
+		quit(1)
+		return
+	_shot = shot_script.new()
 	root.add_child(_shot)
+	# The shot sees the same key=value arguments, and how far it must reach.
+	var reach := _to
+	if args.has("stills"):
+		reach = 0.0
+		for value in str(args["stills"]).split(","):
+			reach = maxf(reach, float(value))
+	args["to"] = str(reach)
+	_shot.options = args
 	_shot.setup(_timeline)
 	if args.has("beats"):
 		_build_beat_flash()
