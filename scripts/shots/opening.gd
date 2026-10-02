@@ -1,15 +1,20 @@
 extends Node3D
 
-# The look sample, song time 0:06 to 0:26 of Lost in the Void, in the print
-# style the owner chose from the FALL-LINIE reference.
+# The opening, song time 0:00 to 0:40 of Lost in the Void (and on into the
+# next phrases once they are written).
 #
-# A ring of voxel tiles circles the message like Saturn's, passing just
-# under the human figure. The astronaut surfs round it, riding the face of a
-# swell that travels with him, painting a rainbow track on the tiles as it
-# passes and kicking up cubes. In the quiet intro the ring is calm and the
-# camera drifts from the visor round to behind; on the first kick (bar 8)
-# the rider springs, the swell rises, the palette turns from the intro's
-# night to the first chapter's, and the sculpture lights from the top down.
+# The message is a monolith so big that, up close, it is just a wall of
+# blocks: each bit is a cube four riders tall. A ring like Saturn's circles
+# it, and the ring descends the monolith through the film like a lift, from
+# the top row down, so the message is never seen whole until the end. Rows
+# light as the ring reaches them, and the ring (and the night) take the
+# colour of the chapter it is passing: the numbers' silver first, then the
+# elements' violet.
+#
+# In the quiet intro the ring is calm, the top rows hang dark, and the
+# camera drifts from the astronaut's visor round behind it. On the first
+# kick (bar 8) the rider springs, the swell rises and the top rows light.
+# The descent's pace is set in bars, so chapter changes land on phrases.
 
 const AstronautScript := preload("res://scripts/astronaut.gd")
 const SprayScript := preload("res://scripts/spray.gd")
@@ -19,20 +24,24 @@ const RingScript := preload("res://scripts/saturn_ring.gd")
 const PaletteScript := preload("res://scripts/palette.gd")
 const InkShader := preload("res://shaders/ink.gdshader")
 
-const PITCH := 1.2           # sculpture cube spacing: 88 units tall, ~58 riders
-const RING_ROW := 55.0       # the ring passes through this (empty) row of the message
-const RING_IN := 80.0
-const RING_OUT := 135.0
-const RING_GAP := Vector2(112.0, 115.0)
+const PITCH := 8.0           # a bit is a cube ~6.9 units across: four riders tall
+const ROWS := 73
+const RING_IN := 104.0       # clears the monolith's half-width (92) as it turns
+const RING_OUT := 131.5      # 27.5 wide: half the first ring's width
+const RING_GAP := Vector2(120.0, 121.5)
 const TILE := 0.55
-const TRACK_RADIUS := 98.0   # the rider's line round the ring
-const CARVE := 4.0           # how far it weaves across the ring
-const GLIDE := 3.0           # speeds along the ring, units per second
+const TRACK_RADIUS := 112.0
+const CARVE := 3.5
+const GLIDE := 3.0           # speeds round the ring, units per second
 const SURF := 6.5
 const SWELL_CALM := 0.25
 const SWELL_HIGH := 1.15
-const RIDE_HEIGHT := 0.12    # the board's deck above the tile tops
+const RIDE_HEIGHT := 0.12
 const FOV := 56.0
+# The descent: [bar, the message row level with the ring]. Chapter edges
+# (row 4.5 between numbers and elements, 10.5 before the formulas) fall on
+# phrase downbeats: bar 16 and bar 24.
+const DESCENT := [[0.0, 1.0], [8.0, 2.6], [16.0, 4.5], [24.0, 10.5], [32.0, 18.0]]
 
 var options := {}
 var timeline
@@ -44,41 +53,34 @@ var sculpture: Node3D
 var ring: Node3D
 var kick := 0.0
 var bar_length := 2.0
-var _palette_from := "intro"
-var _palette_to := "numbers"
+var _row_lit := PackedFloat64Array()
 
 
 func setup(song_timeline) -> void:
 	timeline = song_timeline
 	kick = timeline.section_start("groove_a")
 	bar_length = timeline.period * timeline.beats_per_bar
-	if options.has("palette"):
-		_palette_from = str(options["palette"])
-		_palette_to = _palette_from
 	space = SpaceScript.new()
 	add_child(space)
-	# The ring lies in the world's XZ plane at y = 0, round the y axis; the
-	# sculpture stands on that axis with row RING_ROW at the ring's height.
+	sculpture = SculptureScript.new(PITCH)
+	add_child(sculpture)
 	ring = RingScript.new(RING_IN, RING_OUT, RING_GAP, TILE)
 	add_child(ring)
-	sculpture = SculptureScript.new(PITCH)
-	sculpture.position = Vector3(0.0, (RING_ROW - 36.0) * PITCH, 0.0)
-	add_child(sculpture)
 	astronaut = AstronautScript.new()
 	add_child(astronaut)
-	spray = SprayScript.new(rig_transform, spray_amount, ink_now, astronaut.tail_point, Vector3.UP)
+	spray = SprayScript.new(rig_transform, spray_amount, ink_now, ring_height, astronaut.tail_point, Vector3.UP)
 	add_child(spray)
 	camera = Camera3D.new()
-	camera.fov = 58.0
+	camera.fov = FOV
 	camera.near = 0.05
 	camera.far = 6000.0
 	add_child(camera)
 	camera.make_current()
 	_build_ink_pass()
-	ring.paint(track, 0.0, float(options.get("to", "30")), 1.7)
+	ring.paint(track, 0.0, float(options.get("to", "40")), 1.7)
+	_row_lit = _row_light_times(float(options.get("to", "40")) + 30.0)
 
 
-# The ink outlines: a quad over the whole screen, drawn after everything.
 func _build_ink_pass() -> void:
 	var quad := MeshInstance3D.new()
 	var mesh := QuadMesh.new()
@@ -91,6 +93,59 @@ func _build_ink_pass() -> void:
 	quad.extra_cull_margin = 16384.0
 	quad.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	camera.add_child(quad)
+
+
+# --- The descent ------------------------------------------------------------------
+
+# The row level with the ring at song time t: a Catmull-Rom curve through
+# DESCENT's keys, so the lift never stops dead at a key.
+func ring_row(t: float) -> float:
+	var bar: float = timeline.bar(t)
+	var keys := DESCENT
+	if bar <= float(keys[0][0]):
+		return float(keys[0][1])
+	if bar >= float(keys[keys.size() - 1][0]):
+		var a: Array = keys[keys.size() - 2]
+		var b: Array = keys[keys.size() - 1]
+		return float(b[1]) + (bar - float(b[0])) * (float(b[1]) - float(a[1])) / (float(b[0]) - float(a[0]))
+	var i := 0
+	while float(keys[i + 1][0]) < bar:
+		i += 1
+	var p0: float = float(keys[maxi(i - 1, 0)][1])
+	var p1: float = float(keys[i][1])
+	var p2: float = float(keys[i + 1][1])
+	var p3: float = float(keys[mini(i + 2, keys.size() - 1)][1])
+	var u := (bar - float(keys[i][0])) / (float(keys[i + 1][0]) - float(keys[i][0]))
+	return 0.5 * ((2.0 * p1) + (-p0 + p2) * u + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * u * u + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * u * u * u)
+
+
+func row_height(row: float) -> float:
+	return ((ROWS - 1) * 0.5 - row) * PITCH
+
+
+func ring_height(t: float) -> float:
+	return row_height(ring_row(t))
+
+
+# When each row lights: the rows above the ring at the kick light in a wave
+# from the top as it lands; every row after that lights as the ring comes
+# level with it (half a row early, so it is lit as it arrives).
+func _row_light_times(until: float) -> PackedFloat64Array:
+	var times := PackedFloat64Array()
+	times.resize(ROWS)
+	var at_kick := ring_row(kick)
+	for row in range(ROWS):
+		if row <= at_kick:
+			times[row] = kick + 0.09 * row
+		else:
+			times[row] = 1.0e9
+			var t := kick
+			while t < until:
+				if ring_row(t) >= row - 0.5:
+					times[row] = t
+					break
+				t += 1.0 / 60.0
+	return times
 
 
 # --- Where the rider is -------------------------------------------------------------
@@ -108,8 +163,7 @@ func _surf(t: float) -> float:
 	return smoothstep(kick - 0.2, kick + 1.4, t)
 
 
-# The board's place on the ring as (radius, angle): it weaves across the
-# ring over four bars, and goes round at the gliding, then surfing, speed.
+# The board's place in the ring as (radius, angle).
 func track(t: float) -> Vector2:
 	var distance := GLIDE * t + (SURF - GLIDE) * _ramp_integral(t, kick - 0.2, kick + 1.4)
 	var radius := TRACK_RADIUS + lerpf(0.35, 1.0, _surf(t)) * CARVE * sin(TAU * timeline.bar(t) / 4.0)
@@ -120,8 +174,6 @@ func swell_amplitude(t: float) -> float:
 	return lerpf(SWELL_CALM, SWELL_HIGH, smoothstep(kick - 0.1, kick + timeline.period, t))
 
 
-# The swell travels with the rider, who rides its face: a little up the face
-# and down again over each two bars.
 func swell_phase(t: float) -> float:
 	var ride := -0.55 + 0.4 * sin(TAU * timeline.bar(t) / 2.0)
 	return ring.swell_count * track(t).y - ride
@@ -129,7 +181,7 @@ func swell_phase(t: float) -> float:
 
 func surface_point(t: float, radius: float, angle: float) -> Vector3:
 	var h: float = ring.swell(radius, angle, swell_amplitude(t), swell_phase(t))
-	return RingScript.polar(radius, angle, ring.tile_top() + h + RIDE_HEIGHT)
+	return RingScript.polar(radius, angle, ring_height(t) + ring.tile_top() + h + RIDE_HEIGHT)
 
 
 func board_position(t: float) -> Vector3:
@@ -137,9 +189,6 @@ func board_position(t: float) -> Vector3:
 	return surface_point(t, at.x, at.y)
 
 
-# The rig's frame: +X along the board's travel (up and down the swell), +Y
-# the swell's surface normal, banked into each carve. The rider faces +Z,
-# which points in toward the sculpture.
 func rig_transform(t: float) -> Transform3D:
 	var e := 0.02
 	var p := board_position(t)
@@ -166,33 +215,36 @@ func spray_amount(t: float) -> float:
 	return lerpf(0.25, 1.0, smoothstep(kick - 0.05, kick + 0.2, t))
 
 
-func _palette_mix(t: float) -> float:
-	if options.has("palette"):
-		return 1.0
-	return smoothstep(kick - 0.05, kick + timeline.period, t)
+# --- The palette ----------------------------------------------------------------------
+
+# The intro's blue night until the kick; then the chapter the ring is passing.
+func palette_at(t: float) -> Dictionary:
+	var lit := smoothstep(kick - 0.05, kick + timeline.period, t)
+	return PaletteScript.blend(PaletteScript.colors("intro"), PaletteScript.at_row(ring_row(t)), lit)
 
 
 func ink_now(t: float) -> Color:
-	return PaletteScript.current(_palette_from, _palette_to, _palette_mix(t), "ink")
+	return palette_at(t)["ink"]
 
 
 # --- Each frame -----------------------------------------------------------------------
 
 func update(t: float) -> void:
 	RenderingServer.global_shader_parameter_set("song_time", t)
-	PaletteScript.apply(_palette_from, _palette_to, _palette_mix(t))
+	var palette := palette_at(t)
+	PaletteScript.apply(palette)
+	ring.position = Vector3(0.0, ring_height(t), 0.0)
 	ring.set_swell(swell_amplitude(t), swell_phase(t))
 	var rig := rig_transform(t)
 	astronaut.transform = rig
 	_pose_rider(t)
 	spray.update(t)
-	var paper := PaletteScript.current(_palette_from, _palette_to, _palette_mix(t), "paper")
-	var ink := ink_now(t)
-	var accent := PaletteScript.current(_palette_from, _palette_to, _palette_mix(t), "accent")
-	var lit_at := kick if not options.has("palette") else -100.0
-	sculpture.update(t, lit_at, bar_length * 2.0, timeline.beat_pulse(t, 0.3) if t >= kick else 0.0, paper.lerp(ink, 0.22))
+	var paper: Color = palette["paper"]
+	var ink: Color = palette["ink"]
+	var pulse: float = timeline.beat_pulse(t, 0.3) if t >= kick else 0.0
+	sculpture.update(t, _row_lit, pulse, paper.lerp(ink, 0.2), paper)
 	_place_camera(t, rig)
-	space.update(t, camera.global_position, ink, accent, timeline.beat_pulse(t, 0.2) if t >= kick else 0.0)
+	space.update(t, camera.global_position, ink, palette["accent"], timeline.beat_pulse(t, 0.2) if t >= kick else 0.0)
 
 
 func _pose_rider(t: float) -> void:
@@ -228,19 +280,16 @@ func _pose_rider(t: float) -> void:
 
 
 # From behind the rider: the camera rides just outside the ring, looking in
-# past the astronaut's back at the sculpture, as a surf shot looks past a
-# surfer at the wave. The board slides across the frame (toward the left)
-# and its rainbow track streams away to the right, round the ring.
-# The sculpture turns to keep facing the camera, so it always reads right.
+# past the astronaut's back at the monolith. The board slides across the
+# frame (toward the left) and its rainbow track streams away to the right.
+# The monolith turns to keep facing the camera, so it always reads right.
 #
 # In the intro the camera starts in front of the visor (inside the ring,
-# looking out) and swings round behind the rider, revealing the sculpture
-# just before the kick lights it.
+# looking out) and swings round behind the rider, finding the dark wall of
+# blocks just before the kick lights its top rows.
 func _place_camera(t: float, rig: Transform3D) -> void:
 	var at := track(t)
 	var after := t - kick
-	# Trail the rider a little round the ring, so it sits left of centre
-	# with open space behind it for the trail.
 	var into := smoothstep(6.0, kick - 0.15, t)
 	var trail_angle := at.y - into * 2.4 / TRACK_RADIUS
 	var outward := Vector3(cos(trail_angle), 0.0, sin(trail_angle))
@@ -255,8 +304,8 @@ func _place_camera(t: float, rig: Transform3D) -> void:
 		height = 1.7 + 0.25 * sin(TAU * timeline.bar(t) / 8.0)
 	var offset := (outward * cos(swing) + forward * sin(swing)) * distance + Vector3.UP * height
 	var eye := steady + offset
-	# The framing: aim along the line to the sculpture's axis, pitched so the
-	# rider sits low in frame and the sculpture's top just clears the top.
+	# The framing: aim along the line to the monolith's axis, pitched so the
+	# rider sits low in frame with the wall of blocks rising behind.
 	var to_axis := Vector3(-eye.x, 0.0, -eye.z).normalized()
 	var rider_drop := atan2((rig.origin.y + 0.8) - eye.y, Vector2(rig.origin.x - eye.x, rig.origin.z - eye.z).length())
 	var pitch := rider_drop + deg_to_rad(FOV * 0.28)
@@ -267,10 +316,4 @@ func _place_camera(t: float, rig: Transform3D) -> void:
 	var shake := Vector3(sin(t * 61.0), sin(t * 47.0 + 1.3), 0.0) * 0.04 * punch
 	camera.fov = FOV + 7.0 * punch
 	camera.look_at_from_position(eye + shake, target, Vector3.UP)
-	# The sculpture faces the camera; the moon hangs behind its upper part.
-	var facing := atan2(eye.x, eye.z)
-	sculpture.rotation = Vector3(0.0, facing, 0.0)
-	# Aim at the message's upper rows (row 8), then nudge right of it: screen
-	# right is against the direction of travel.
-	var upper: Vector3 = sculpture.position + Vector3.UP * (36.0 - 8.0) * PITCH
-	space.set_moon((upper - camera.global_position).normalized() - forward * 0.2 + Vector3.UP * 0.03, 0.1)
+	sculpture.rotation = Vector3(0.0, atan2(eye.x, eye.z), 0.0)

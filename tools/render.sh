@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Render a shot to PNG frames with Godot, then encode them with the song.
 #
-#   tools/render.sh <name> shot=sample song=lost-in-the-void from=6 to=26 \
-#     [size=1920x1080] [dither=0] [beats]
+#   tools/render.sh <name> shot=opening song=lost-in-the-void from=0 to=40 \
+#     [size=1280x720] [dither=1] [beats]
+#
+# Defaults are the film's: 1920x1080, flat tones (no halftone dither).
 #
 # Writes renders/<name>.mp4: H.264 from lossless frames, with the song's own
 # audio from the same song time (AAC). The song file itself is never
@@ -16,12 +18,12 @@ FFMPEG=${FFMPEG:-/opt/homebrew/bin/ffmpeg}
 FFPROBE=${FFPROBE:-/opt/homebrew/bin/ffprobe}
 FPS=30
 
-name=${1:?usage: tools/render.sh <name> shot=... song=... from=... to=... [size=WxH] [dither=0] [beats]}
+name=${1:?usage: tools/render.sh <name> shot=... song=... from=... to=... [size=WxH] [dither=1] [beats]}
 shift
 song=lost-in-the-void
 from=0
 to=""
-size=1280x720
+size=1920x1080
 for arg in "$@"; do
   case $arg in
     song=*) song=${arg#song=} ;;

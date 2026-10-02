@@ -23,7 +23,7 @@ func _initialize() -> void:
 		args[parts[0]] = parts[1] if parts.size() > 1 else "1"
 	_out = str(args.get("out", "/tmp"))
 	var palette := str(args.get("palette", "intro"))
-	PaletteScript.apply(palette, palette, 1.0)
+	PaletteScript.apply(PaletteScript.colors(palette))
 	var space := SpaceScript.new()
 	root.add_child(space)
 	var astronaut := AstronautScript.new()
@@ -42,7 +42,8 @@ func _initialize() -> void:
 	quad.mesh = mesh
 	quad.extra_cull_margin = 16384.0
 	_camera.add_child(quad)
-	space.update(0.0, Vector3.ZERO, PaletteScript.color(palette, "ink"), PaletteScript.color(palette, "accent"), 0.0)
+	var colors := PaletteScript.colors(palette)
+	space.update(0.0, Vector3.ZERO, colors["ink"], colors["accent"], 0.0)
 	process_frame.connect(_on_frame)
 
 

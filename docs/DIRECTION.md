@@ -6,20 +6,26 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
 
 - **The hero:** a little voxel astronaut, built like AgentVille's farmhands (box body, swinging limbs, a voxel face in an open visor). It surfs on a board that leaves a trail of colours behind it.
 - **The sky:** night. Deep space, a faint galaxy band, voxel stars.
-- **The message:** the Arecibo Message stands as a giant sculpture of voxel cubes.
-- **The ring (owner's idea, 2026-10-02):** a giant ring like Saturn's circles the sculpture, and the astronaut surfs on it.
+- **The message:** a monolith so big that, up close, the viewer doesn't know what they're looking at. Each bit is a cube about four riders tall (pitch 8 units), so the whole message is 584 units tall.
+- **The ring (owner's idea, 2026-10-02):** a giant ring like Saturn's circles the monolith, and the astronaut surfs on it.
   - The ring is made of voxel tiles, banded like Saturn's rings, with a gap like the Cassini Division.
-  - It passes just under the message's human figure (row 55), so the Solar System and the telescope hang below it.
+  - Narrowed by half to 27.5 units wide (the owner's call).
   - A swell travels round the ring with the astronaut, who rides its face.
   - The trail paints the tiles in rainbow colours. Tiles dip under the board and wobble back, and cubes spray up behind it.
-- **The camera:** third person from behind the astronaut, toward the sculpture. It rides just outside the ring, looking in past the astronaut's back, and the board slides across the frame. The sculpture turns to face the camera, so it always reads correctly.
+- **The descent (owner's direction):** the film starts at the top of the monolith. The ring carries the astronaut down it, chapter by chapter, like a lift.
+  - Rows light as the ring reaches them.
+  - The monolith is revealed whole only at the end.
+  - The pace is set in bars (`DESCENT` in `scripts/shots/opening.gd`), so chapter changes land on phrase downbeats.
+- **The ring's colour:** the ring and the night take the colour of the chapter the ring is passing.
+- **The camera:** third person from behind the astronaut, toward the monolith. It rides just outside the ring, looking in past the astronaut's back, and the board slides across the frame. The monolith turns to face the camera, so it always reads correctly.
+- **The sky:** no moon (removed 2026-10-02). About 1,800 voxel stars, and floating dust for parallax, 10% of it smaller.
 
 ## The style reference
 
 - **What:** FALL-LINIE, a snowboarding game by Grotesk. The owner's clip is at `~/Downloads/surfing.mp4`; a playable remux is at `~/Downloads/surfing-fixed.mp4`.
 - **Taken from it:** the visual grammar only, never its branding or font:
   - a printed look: flat colours, halftone shading, ink outlines;
-  - one giant landmark at the vanishing point, with a big disc behind it (our moon);
+  - one giant landmark at the vanishing point (the reference's sun disc was tried as a moon, then dropped);
   - a low chase camera;
   - a track and spray behind the board;
   - a palette that changes from run to run.
@@ -33,8 +39,9 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
   - telescope, purple.
   The intro, before the message begins, is a plain blue night. The B-roll cut-aways will use light paper in the same chapter colours.
 - **On-screen text:** no numbers or words for now.
-- **Aspect and size:** 16:9 at 30 fps. 1280×720 was agreed first. 1920×1080 now renders too (2026-10-02); the final size is the owner's call.
-- **Dither:** `dither=0` renders flat, solid tones instead of halftone dots, for comparison. Which one the film uses is the owner's call.
+- **Aspect and size, locked 2026-10-02:** 16:9, 1920×1080, 30 fps.
+- **Shading, locked 2026-10-02:** flat, solid tones with no halftone dither. `dither=1` still brings the dots back.
+- **Exposure:** no pure whites. The first chapter's palette is a cool silver, and the suit is off-white. Lit message cubes and the rainbow track are toned down a step, so the frame doesn't blow out.
 - **Where it's posted:** X. The owner has Premium, so the full 3:12 song fits.
 
 ## The structure

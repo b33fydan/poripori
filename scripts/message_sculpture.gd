@@ -78,21 +78,21 @@ func height() -> float:
 	return ROWS * pitch
 
 
-# The cubes light in a wave from the top row down, starting at `lit_at` and
-# reaching the bottom `wave` seconds later; each pops a little as it lights.
-# Before that they hang as `unlit`, a shade of the night. Each prints flat and
-# bright for a moment as it lights. `pulse` swells the cubes on the beat.
-func update(t: float, lit_at: float, wave: float, pulse: float, unlit: Color) -> void:
+# Each row lights at its own time, `row_lit[row]`; each cube pops a little
+# and prints flat and bright for a moment as it lights. Before that cubes
+# hang as `unlit`, a shade of the night. Lit cubes are toned a touch toward
+# `paper` so white rows don't blow out. `pulse` swells the cubes on the beat.
+func update(t: float, row_lit: PackedFloat64Array, pulse: float, unlit: Color, paper: Color) -> void:
 	for i in range(_cubes.size()):
 		var cube: Array = _cubes[i]
 		var row: int = cube[0]
-		var lit_time := lit_at + wave * float(row) / float(ROWS - 1)
+		var lit_time := row_lit[row]
 		var since := t - lit_time
 		var on := smoothstep(0.0, 0.18, since)
 		var flash := exp(-maxf(since, 0.0) * 5.0) * on
 		var pop := 1.0 + 0.35 * flash - 0.12 * (1.0 - on) + 0.06 * pulse * on
 		multimesh.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ONE * pop), home(row, cube[1])))
 		var base: Color = cube[3]
-		var color := unlit.lerp(base, on).srgb_to_linear()
+		var color := unlit.lerp(base.lerp(paper, 0.24), on).srgb_to_linear()
 		color.a = 1.0 if flash > 0.35 else 0.0
 		multimesh.set_instance_color(i, color)

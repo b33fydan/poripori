@@ -12,8 +12,8 @@ extends Node3D
 const VoxelPartScript := preload("res://scripts/voxel_part.gd")
 const U := 0.05
 
-const SUIT := Color("#f1f0ea")
-const SUIT_SHADE := Color("#d9dbe0")
+const SUIT := Color("#dedcd4")        # off-white: a pure white suit blew out
+const SUIT_SHADE := Color("#c3c6cd")
 const TRIM := Color("#6b7396")
 const DARK := Color("#2c3156")
 const ACCENT := Color("#5e8ec7")  # AgentVille's farmhand blue

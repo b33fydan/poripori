@@ -5,16 +5,16 @@ extends SceneTree
 # muxed in afterwards by tools/render.sh, untouched; this renders picture only.
 #
 #   Godot --path . --resolution 1280x720 --script res://scripts/film.gd -- \
-#     shot=sample song=lost-in-the-void from=6 to=26 frames=<dir> \
-#     [size=1920x1080] [dither=0] [beats]
+#     shot=opening song=lost-in-the-void from=0 to=40 frames=<dir> \
+#     [size=1280x720] [dither=1] [beats]
 #
-# The shot renders into an offscreen viewport of `size` (default 1280x720),
+# The shot renders into an offscreen viewport of `size` (default 1920x1080),
 # and each frame is saved the moment it has been drawn. The window only
 # shows a preview, so it can stay small: Movie Maker records the window
 # itself, and a 1080p window gets maximized and misframed on this Mac's
 # 1920x1080 screen. Halftone dots and ink lines scale with `size`.
 #
-# `dither=0` swaps the halftone dots for flat, solid tones. `beats` draws a
+# The film uses flat, solid tones; `dither=1` brings back the halftone dots. `beats` draws a
 # flash on every beat (red on the bar's first) for checking sync.
 # `stills=7.5,16,22 out=<dir>` saves PNG stills at those song times instead.
 
@@ -25,7 +25,7 @@ const WARM_UP := 3  # frames drawn before the first one is kept
 var _timeline
 var _shot: Node
 var _viewport: SubViewport
-var _size := Vector2i(1280, 720)
+var _size := Vector2i(1920, 1080)
 var _from := 0.0
 var _to := 0.0
 var _total := 0
@@ -45,7 +45,7 @@ func _initialize() -> void:
 		var wh := str(args["size"]).split("x")
 		_size = Vector2i(int(wh[0]), int(wh[1]))
 	RenderingServer.global_shader_parameter_set("print_scale", _size.y / 720.0)
-	RenderingServer.global_shader_parameter_set("dither", 0.0 if str(args.get("dither", "1")) == "0" else 1.0)
+	RenderingServer.global_shader_parameter_set("dither", 1.0 if str(args.get("dither", "0")) == "1" else 0.0)
 	_timeline = SongTimelineScript.load_song(str(args.get("song", "lost-in-the-void")))
 	if _timeline == null:
 		quit(1)
@@ -54,7 +54,7 @@ func _initialize() -> void:
 	_to = float(args.get("to", str(_timeline.duration)))
 	_total = int(round((_to - _from) * FPS))
 	_build_viewport()
-	var shot_path := "res://scripts/shots/%s.gd" % str(args.get("shot", "sample"))
+	var shot_path := "res://scripts/shots/%s.gd" % str(args.get("shot", "opening"))
 	var shot_script := load(shot_path) as GDScript
 	if shot_script == null or not shot_script.can_instantiate():
 		push_error("[Film] can't load %s" % shot_path)

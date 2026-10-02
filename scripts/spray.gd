@@ -16,16 +16,18 @@ const GRAVITY := 9.0
 var rig_at: Callable     # func(t) -> Transform3D of the rig
 var amount_at: Callable  # func(t) -> 0..1, how hard the board is spraying
 var ink_at: Callable     # func(t) -> Color, the current ink
+var height_at: Callable  # func(t) -> the ring's height; cubes ride with it as it descends
 var tail_point := Vector3.ZERO
 var up := Vector3.UP     # the ring's normal: cubes fall back toward it
 var multimesh: MultiMesh
 
 
-func _init(rig: Callable, amount: Callable, ink: Callable, tail: Vector3, ring_up: Vector3) -> void:
+func _init(rig: Callable, amount: Callable, ink: Callable, height: Callable, tail: Vector3, ring_up: Vector3) -> void:
 	name = "Spray"
 	rig_at = rig
 	amount_at = amount
 	ink_at = ink
+	height_at = height
 	tail_point = tail
 	up = ring_up.normalized()
 	var cube := BoxMesh.new()
@@ -55,6 +57,7 @@ func update(t: float) -> void:
 	var last := int(floor(t * RATE))
 	var slot := 0
 	var ink: Color = ink_at.call(t)
+	var ring_now: float = height_at.call(t)
 	for k in range(first, last + 1):
 		var born := k / RATE
 		var age := t - born
@@ -69,7 +72,9 @@ func update(t: float) -> void:
 		var b := _hash(k, 2)
 		var c := _hash(k, 3)
 		var across := (a - 0.5) * 2.0
-		var start := xf * (tail_point + Vector3(0.0, 0.05, across * 0.2))
+		# Worked in the ring's frame (its height at birth taken off), then put
+		# back at the ring's height now.
+		var start := xf * (tail_point + Vector3(0.0, 0.05, across * 0.2)) - up * float(height_at.call(born))
 		var back := -xf.basis.x.normalized()
 		var side := xf.basis.z.normalized()
 		var velocity := up * (1.2 + 2.2 * b) * (0.5 + 0.5 * amount) + back * (0.6 + 1.2 * c) + side * across * 1.2
@@ -78,13 +83,14 @@ func update(t: float) -> void:
 		var height := (p - start).dot(up)
 		if height < 0.0:
 			p -= up * height
+		p += up * ring_now
 		var life := age / LIFE
 		var size := (0.55 + 0.75 * c) * (0.6 + 0.4 * amount) * (1.0 - smoothstep(0.6, 1.0, life))
 		var spin := Basis(Vector3(a - 0.5, b - 0.5, c - 0.5).normalized(), age * (2.0 + 6.0 * c))
 		multimesh.set_instance_transform(slot, Transform3D(spin.scaled(Vector3.ONE * size), p))
 		var color := ink
 		if _hash(k, 5) < 0.35 * amount:
-			color = Color.from_hsv(fposmod(born * 0.16 + across * 0.12, 1.0), 0.62, 1.0)
+			color = Color.from_hsv(fposmod(born * 0.16 + across * 0.12, 1.0), 0.6, 0.84)
 		var linear := color.srgb_to_linear()
 		linear.a = 0.0
 		multimesh.set_instance_color(slot, linear)

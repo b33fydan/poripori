@@ -40,13 +40,13 @@ void vertex() {
 	local_pos = VERTEX;
 	VERTEX.y += swell(r, theta) + press;
 	paint = since >= 0.0 ? 1.0 - smoothstep(paint_hold, paint_hold + paint_fade, since) : 0.0;
-	paint_color = srgb_to_linear(hsv_to_rgb(vec3(fract(passed * 0.16 + INSTANCE_CUSTOM.w * 0.45), 0.6, 1.0)));
+	paint_color = srgb_to_linear(hsv_to_rgb(vec3(fract(passed * 0.16 + INSTANCE_CUSTOM.w * 0.45), 0.6, 0.84)));
 	float x = (r - r_in) / (r_out - r_in);
 	tone = clamp(0.55 + 0.22 * sin(x * 41.0) + 0.14 * sin(x * 97.0 + 1.3) + 0.1 * sin(x * 13.0 + 0.4), 0.0, 1.0);
 }
 
 void fragment() {
-	vec3 band = mix(mix(paper.rgb, accent.rgb, 0.16), mix(paper.rgb, accent.rgb, 0.62), tone);
+	vec3 band = mix(mix(paper.rgb, accent.rgb, 0.14), mix(paper.rgb, accent.rgb, 0.5), tone);
 	vec3 base = mix(band, paint_color, paint);
 	vec3 shade = mix(base, paper.rgb, 0.6);
 	vec3 c = mix(base, shade, halftone(FRAGCOORD.xy, print_coverage(NORMAL, VIEW_MATRIX)));

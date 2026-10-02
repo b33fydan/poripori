@@ -2,6 +2,57 @@
 
 Newest entry first. Each entry covers one working slice: what was decided, how it was checked, and the exact next step.
 
+## 2026-10-02 — The descending opening, 0:00–0:40
+
+**Owner direction**
+- Lock 1080p with flat tones (no dither).
+- The highlights were overblown after the kick.
+- Remove the moon.
+- Make the message much bigger, so the viewer doesn't know what it is at first.
+- Start at the top and surf down round the monolith until it's revealed.
+- The ring takes the colour of the section it's passing.
+- Make the ring 50% narrower.
+- More stars, and about 10% more floating particles, smaller.
+- Make a 40-second video.
+
+**What changed**
+- **`scripts/shots/opening.gd`** (renamed from `sample.gd`) is the film's opening.
+  - **The monolith:** pitch 8, so each cube is about four riders tall and the message is 584 units tall.
+  - **The ring:** 104–131.5 (27.5 wide), gap 120–121.5, about 63,000 tiles. It descends with `ring_row(t)`, a Catmull-Rom curve through `DESCENT` keys set in bars:
+    - row 1.0 at bar 0;
+    - row 2.6 at the kick;
+    - row 4.5 at bar 16 (the numbers/elements edge);
+    - row 10.5 at bar 24 (the elements/formulas edge);
+    - row 18 at bar 32.
+  - **Row lighting:** rows above the ring at the kick light in a top-down wave as it lands. Later rows light as the ring comes level with them.
+- **`scripts/palette.gd`** gained `at_row()`: the palette follows the ring's row, crossing chapters over about a beat. The intro stays a blue night until the kick.
+- **`scripts/spray.gd`:** spray cubes ride in the ring's frame, so they descend with it.
+- **The sky:** the moon is removed from the sky shader. Stars went from 700 to 1,800. Dust went from 300 to 330, the extra 30 at half size.
+- **The exposure fix:**
+  - The numbers palette is now silver, not white.
+  - Ring bands are capped lower.
+  - Ink lines are softened.
+  - Lit message cubes are toned 24% toward the paper.
+  - The suit is off-white (#dedcd4).
+  - The rainbow and spray are at value 0.84.
+- **Defaults:** `film.gd` and `render.sh` now default to 1920×1080 and flat tones. `dither=1` and `size=` still override.
+
+**How it was checked**
+- **Exposure, by luma share above 0.85:**
+  - Before: 18–20% of the frame after the kick in the 1080p flat sample.
+  - After: 0.1–0.4% in stills from across the 40 seconds, with none above 0.95.
+- **Look:** checked against still sheets at 3, 10, 14.5, 16.5, 22, 30, 35 and 39.5 s.
+  - The top rows read as an unrecognisable wall of blocks.
+  - They hang dark before the kick and light on it.
+  - The elements rows rise into view in violet as the ring and night turn violet.
+- **Render:** `renders/opening.mp4`, song 0:00–0:40.
+
+**Next step**
+- The owner reviews the opening.
+- Then the next phrases of the descent: the formulas from bar 24, and the reach at bar 32.
+
+---
+
 ## 2026-10-02 — 1080p, and a version without the halftone dither
 
 **What changed**

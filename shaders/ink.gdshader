@@ -15,7 +15,7 @@ uniform sampler2D normal_tex : hint_normal_roughness_texture, filter_nearest;
 uniform float width = 1.0;
 uniform float depth_edge = 0.05;
 uniform float normal_edge = 0.3;
-uniform float strength = 0.92;
+uniform float strength = 0.8;
 
 void vertex() {
 	POSITION = vec4(VERTEX.xy * 2.0, 1.0, 1.0);
@@ -47,5 +47,5 @@ void fragment() {
 		}
 	}
 	vec3 scene = texture(screen_tex, SCREEN_UV).rgb;
-	ALBEDO = mix(scene, ink.rgb, edge * strength);
+	ALBEDO = mix(scene, mix(ink.rgb, paper.rgb, 0.25), edge * strength);
 }

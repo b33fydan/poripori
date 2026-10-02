@@ -1,16 +1,17 @@
 class_name Space
 extends Node3D
 
-# The night, printed: the sky shader lays down paper, a halftone galaxy band
-# and the moon; voxel stars ride with the camera like the sky does, and a
-# little dust streams past to show speed. There are no scene lights: every
+# The night, printed: the sky shader lays down paper and a galaxy band;
+# voxel stars ride with the camera like the sky does, and dust streams past
+# to show speed and depth. There are no scene lights: every
 # surface takes its tones from the print shaders and the global palette.
 
 const SkyShader := preload("res://shaders/print_sky.gdshader")
 const PrintShader := preload("res://shaders/print.gdshader")
-const FAR_STARS := 700
+const FAR_STARS := 1800
 const FAR_RADIUS := 2400.0
-const DUST := 300
+const DUST := 330          # 300, plus 10% more at half size for depth
+const SMALL_DUST_FROM := 300
 const DUST_BOX := Vector3(70.0, 50.0, 90.0)
 
 var environment: Environment
@@ -69,7 +70,7 @@ func _build_far_stars() -> void:
 		var direction := Vector3(rng.randf_range(-1, 1), rng.randf_range(-1, 1), rng.randf_range(-1, 1))
 		while direction.length() > 1.0 or direction.length() < 0.1:
 			direction = Vector3(rng.randf_range(-1, 1), rng.randf_range(-1, 1), rng.randf_range(-1, 1))
-		var size := pow(rng.randf(), 3.0) * 12.0 + 3.0
+		var size := pow(rng.randf(), 3.5) * 12.0 + 2.2
 		_star_data.append([direction.normalized(), size, rng.randf_range(0.6, 2.2), rng.randf() * TAU, rng.randf()])
 	_stars_node = Node3D.new()
 	var instance := MultiMeshInstance3D.new()
@@ -89,11 +90,6 @@ func _build_dust() -> void:
 	instance.multimesh = _dust
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(instance)
-
-
-func set_moon(direction: Vector3, radius := 0.12) -> void:
-	sky_material.set_shader_parameter("moon_dir", direction.normalized())
-	sky_material.set_shader_parameter("moon_radius", radius)
 
 
 # ink and accent: the current palette's. pulse: 0..1 on the beat.
@@ -119,5 +115,7 @@ func update(t: float, camera_position: Vector3, ink: Color, accent: Color, pulse
 			fposmod(home.y - corner.y, DUST_BOX.y),
 			fposmod(home.z - corner.z, DUST_BOX.z)) + corner
 		var spin := Basis(Vector3(home.y, home.z, home.x).normalized(), home.x + t * 0.3)
+		if i >= SMALL_DUST_FROM:
+			spin = spin.scaled(Vector3.ONE * 0.5)
 		_dust.set_instance_transform(i, Transform3D(spin, p))
 		_dust.set_instance_color(i, dust_color)
