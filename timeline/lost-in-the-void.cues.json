@@ -1,0 +1,28 @@
+{
+ "about": "The owner's cue notes for Lost in the Void. 'near' is the owner's rough time in seconds; the analysis snaps each cue to the nearest bar. Section names are keyed by the bar each section starts on, once the analysis has found them.",
+ "sections": {
+  "0": "intro",
+  "8": "groove_a",
+  "32": "mellow",
+  "42": "mellow_build",
+  "48": "drop",
+  "64": "break",
+  "72": "groove_c",
+  "80": "groove_c_peak",
+  "86": "outro",
+  "92": "outro_swell",
+  "96": "tail"
+ },
+ "cues": [
+  {
+   "name": "reach",
+   "near": 64.0,
+   "note": "The song turns mellow: the astronaut reaches up in slow motion; the Claude mascot is revealed bit by bit, intercut with low flybys over the message's human figure."
+  },
+  {
+   "name": "touch",
+   "near": 96.0,
+   "note": "The beat kicks back in as the astronaut and the mascot touch hands; from here the mascot rides the board's tip, pointing forward."
+  }
+ ]
+}

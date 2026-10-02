@@ -1,0 +1,29 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Arecibo"
+config/description="A voxel music video about the Arecibo Message, rendered with Movie Maker."
+config/features=PackedStringArray("4.6", "Forward Plus")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/resizable=false
+
+[editor]
+
+movie_writer/mjpeg_quality=0.95
+
+[rendering]
+
+anti_aliasing/quality/msaa_3d=2

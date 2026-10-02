@@ -1,0 +1,29 @@
+# Licensed files (MEGAVOX models, Ocular Sounds) stay on this machine only.
+assets/licensed_local/
+
+# Songs stay out of git; each song's timeline in timeline/ is committed.
+songs/*
+!songs/.gdignore
+*.mp3
+*.wav
+*.aiff
+*.flac
+*.m4a
+
+# Renders and frames.
+renders/
+*.avi
+*.mp4
+*.mov
+
+# Godot.
+.godot/
+*.import
+export_presets.cfg
+
+# macOS metadata (this drive is exFAT, so every file gets a ._ twin).
+._*
+.DS_Store
+
+# Python.
+__pycache__/
