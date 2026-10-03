@@ -48,7 +48,7 @@ void vertex() {
 void fragment() {
 	vec3 band = mix(mix(paper.rgb, accent.rgb, 0.14), mix(paper.rgb, accent.rgb, 0.5), tone);
 	vec3 base = mix(band, paint_color, paint);
-	vec3 shade = mix(base, paper.rgb, 0.6);
+	vec3 shade = mix(base, shadow.rgb, 0.6);
 	vec3 c = mix(base, shade, halftone(FRAGCOORD.xy, print_coverage(NORMAL, VIEW_MATRIX)));
 	// Thin dark seams between tiles, fading out with distance so far
 	// tiles don't shimmer.

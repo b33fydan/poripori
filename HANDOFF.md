@@ -2,6 +2,51 @@
 
 Newest entry first. Each entry covers one working slice: what was decided, how it was checked, and the exact next step.
 
+## 2026-10-03 — One minute: B-roll, close follow, static monolith, real board
+
+**Owner direction**
+- B-roll should be separate incidents that keep the mystery.
+- Can I make hyperlapses? Answered: yes, by running the world's time faster than the song's.
+- The monolith should stay static.
+- The board should tilt like a real one and be slightly longer.
+- Then: add 20 seconds; a 10 s B-roll of astronauts building the top layer somewhere else; and a 5 s close follow behind the surfer.
+
+**What changed**
+- **The edit:** `edits/opening.json` runs song 0:00–1:00 with cuts on bars:
+  - ring, bars 0–11;
+  - B-roll, bars 11–16 (9.9 s);
+  - ring, bars 16–24, cutting back as the ring turns violet on the phrase;
+  - close follow, bars 24–26.5 (5 s), landing as the formulas section turns the ring green;
+  - ring to 1:00.
+- **`tools/render_edit.py`** renders each cut with `film.gd`, which now takes `start=` and numbers frames on the whole video's clock, into one folder. It encodes once with the song and writes `renders/<name>.cuts.json`. `tools/check_cuts.py` finds the hard cuts by frame difference and checks each one lands on its planned frame.
+- **The B-roll (`scripts/shots/broll_numbers.gd`):**
+  - A ragged floating island of 1-unit voxels with MEGAVOX trees and rocks, recoloured by luminance into a blueprint `numbers_day` palette.
+  - Nine astronauts (`Astronaut.new(trim, false)`: no board, their own trim colour) stand in a bucket-brigade line.
+  - Each of the 27 blocks (the 1s of rows 0–3, bottom row first) leaps from a pile and is tossed hand to hand, then thrown up into its slot. It lands on an eighth-note and snaps in with a squash.
+  - The hyperlapse camera glides along the line to the wall while the sky's clouds race (`drift`).
+  - Everything is a function of song time.
+- **MEGAVOX:** `tools/sync_licensed_assets.sh` copies the pack into the git-ignored `assets/licensed_local/megavox/`. `scripts/megavox.gd` loads models (null when the files are missing) and recolours them into the print shader (`tint` uniform). `tools/godot/megavox_sheet.gd` renders contact sheets for choosing.
+- **The print shader** has a `shadow` global (paper at night, deep ink by day) and a `tint` uniform. The sky has a cloud `drift`.
+- **The opening:**
+  - The monolith is static, facing the camera at 0:38.
+  - The board is 31 voxels long and tilted onto its rail with the nose up, pivoting at the tail's inside rail (`Astronaut.rail_pivot`).
+  - `camera=follow` adds the close chase.
+- **The astronaut:** a longer board, a `trim` colour per astronaut, and `pose_on_foot()` for builders, who carry blocks at the chest because the helmet is too big to lift one overhead.
+
+**How it was checked**
+- **Look:** still sheets of the B-roll and the ring through each change. The B-roll camera was moved off the island's edge, the palette pushed to blueprint blue for contrast, and the trees moved off the finished wall.
+- **Cuts:** `tools/check_cuts.py` passes on `renders/opening-60.mp4` (1,800 frames, 60.0 s): cuts at frames 657, 954, 1430 and 1579, exactly as planned, and no others.
+  - The first run found an unplanned "cut" at frame 478, the kick. The camera's FOV punch jumped 7° in one frame and read as a jump cut, and the per-bar distance pulse popped the same way.
+  - Both now rise over about three frames (`_hit()`), and the punch is 5°.
+- **The close follow:** a first version had the spray rushing into the lens and hiding the rider while the static monolith's end loomed overhead. The camera is now higher and over the back shoulder, and the spray is a step darker.
+- **Exposure:** the ring shots peak at 0.93% of pixels above 0.85 luma. The B-roll averages 41%, because it's light paper by design.
+
+**Next step**
+- The owner reviews the minute.
+- Then: the mellow section from bar 32 (the reach and the mascot), more B-roll incidents, and where in the orbit the key moments fall.
+
+---
+
 ## 2026-10-02 — The descending opening, 0:00–0:40
 
 **Owner direction**

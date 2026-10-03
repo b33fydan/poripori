@@ -1,12 +1,14 @@
 extends SceneTree
 
-# Renders a shot of the film to PNG frames. Every frame shows one song time,
-# from + n / FPS, so any moment can be re-rendered exactly. The audio is
+# Renders a shot of the film to PNG frames. Frame n of a video shows song
+# time start + n / FPS (start defaults to from), so any moment can be
+# re-rendered exactly, and a segment of a longer edit (from..to) renders
+# just its own frames, numbered on the whole video's clock. The audio is
 # muxed in afterwards by tools/render.sh, untouched; this renders picture only.
 #
 #   Godot --path . --resolution 1280x720 --script res://scripts/film.gd -- \
 #     shot=opening song=lost-in-the-void from=0 to=40 frames=<dir> \
-#     [size=1280x720] [dither=1] [beats]
+#     [start=0] [size=1280x720] [dither=1] [beats] [any shot option=value]
 #
 # The shot renders into an offscreen viewport of `size` (default 1920x1080),
 # and each frame is saved the moment it has been drawn. The window only
@@ -26,9 +28,10 @@ var _timeline
 var _shot: Node
 var _viewport: SubViewport
 var _size := Vector2i(1920, 1080)
+var _start := 0.0
 var _from := 0.0
 var _to := 0.0
-var _total := 0
+var _end_index := 0
 var _frame := 0
 var _warm := 0
 var _pending := ""  # where the frame being drawn should be saved
@@ -52,7 +55,11 @@ func _initialize() -> void:
 		return
 	_from = float(args.get("from", "0"))
 	_to = float(args.get("to", str(_timeline.duration)))
-	_total = int(round((_to - _from) * FPS))
+	_start = float(args.get("start", str(_from)))
+	# The segment's frames: every n whose song time start + n / FPS falls
+	# in [from, to).
+	_frame = int(ceil((_from - _start) * FPS - 0.0001))
+	_end_index = int(ceil((_to - _start) * FPS - 0.0001))
 	_build_viewport()
 	var shot_path := "res://scripts/shots/%s.gd" % str(args.get("shot", "opening"))
 	var shot_script := load(shot_path) as GDScript
@@ -81,7 +88,7 @@ func _initialize() -> void:
 	else:
 		_frames_dir = ProjectSettings.globalize_path(str(args.get("frames", "res://renders/frames")))
 		DirAccess.make_dir_recursive_absolute(_frames_dir)
-	print("[Film] %s, song %s, %.3f to %.3f s (%d frames) at %dx%d" % [shot_path, _timeline.song_id, _from, _to, _total, _size.x, _size.y])
+	print("[Film] %s, song %s, %.3f to %.3f s (frames %d to %d) at %dx%d" % [shot_path, _timeline.song_id, _from, _to, _frame, _end_index - 1, _size.x, _size.y])
 	process_frame.connect(_on_frame)
 	RenderingServer.frame_post_draw.connect(_on_drawn)
 
@@ -125,11 +132,11 @@ func _on_frame() -> void:
 			_pending = "%s/still-%06.2f.png" % [_out_dir, t]
 		_warm += 1
 		return
-	if _frame >= _total:
+	if _frame >= _end_index:
 		quit()
 		return
-	_pose(_from + _frame / FPS)
-	if _frame > 0 or _warm >= WARM_UP:
+	_pose(_start + _frame / FPS)
+	if _warm >= WARM_UP:
 		_pending = "%s/frame%06d.png" % [_frames_dir, _frame]
 	_warm += 1
 

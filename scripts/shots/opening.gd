@@ -15,6 +15,14 @@ extends Node3D
 # camera drifts from the astronaut's visor round behind it. On the first
 # kick (bar 8) the rider springs, the swell rises and the top rows light.
 # The descent's pace is set in bars, so chapter changes land on phrases.
+#
+# The monolith stands still (the owner's call): as the camera circles with
+# the rider, it sees it from changing angles. It is turned to face the
+# camera at FRONT_AT, so through this stretch it is seen at an angle, never
+# edge-on or from behind.
+#
+# options: camera=follow swaps the wide chase for a close one right behind
+# the board.
 
 const AstronautScript := preload("res://scripts/astronaut.gd")
 const SprayScript := preload("res://scripts/spray.gd")
@@ -42,6 +50,11 @@ const FOV := 56.0
 # (row 4.5 between numbers and elements, 10.5 before the formulas) fall on
 # phrase downbeats: bar 16 and bar 24.
 const DESCENT := [[0.0, 1.0], [8.0, 2.6], [16.0, 4.5], [24.0, 10.5], [32.0, 18.0]]
+const FRONT_AT := 38.0       # song time when the monolith faces the camera
+# The board rides like a surfboard on water: nose up, rolled onto its
+# toe-side rail, pivoting on that rail at the tail.
+const NOSE_UP := 6.0
+const RAIL := 11.0
 
 var options := {}
 var timeline
@@ -79,6 +92,10 @@ func setup(song_timeline) -> void:
 	_build_ink_pass()
 	ring.paint(track, 0.0, float(options.get("to", "40")), 1.7)
 	_row_lit = _row_light_times(float(options.get("to", "40")) + 30.0)
+	# Static: front toward where the camera rides at FRONT_AT (just outside
+	# the rider's line).
+	var front := track(FRONT_AT).y
+	sculpture.rotation = Vector3(0.0, atan2(cos(front), sin(front)), 0.0)
 
 
 func _build_ink_pass() -> void:
@@ -208,7 +225,13 @@ func rig_transform(t: float) -> Transform3D:
 	var lean := clampf(accel.dot(z) * 0.1, -0.4, 0.4)
 	y = (y + z * lean).normalized()
 	z = x.cross(y).normalized()
-	return Transform3D(Basis(x, y, z), p)
+	var xf := Transform3D(Basis(x, y, z), p)
+	# Nose up and onto the rail, more of both once surfing; the tail's
+	# inside rail stays where it was, on the water.
+	var surf := _surf(t)
+	var tilt := Basis(Vector3.BACK, deg_to_rad(NOSE_UP * lerpf(0.6, 1.0, surf))) * Basis(Vector3.RIGHT, deg_to_rad(RAIL * lerpf(0.5, 1.0, surf)))
+	var pivot: Vector3 = astronaut.rail_pivot
+	return xf * Transform3D(tilt, pivot - tilt * pivot)
 
 
 func spray_amount(t: float) -> float:
@@ -243,7 +266,10 @@ func update(t: float) -> void:
 	var ink: Color = palette["ink"]
 	var pulse: float = timeline.beat_pulse(t, 0.3) if t >= kick else 0.0
 	sculpture.update(t, _row_lit, pulse, paper.lerp(ink, 0.2), paper)
-	_place_camera(t, rig)
+	if str(options.get("camera", "")) == "follow":
+		_place_follow_camera(t, rig)
+	else:
+		_place_camera(t, rig)
 	space.update(t, camera.global_position, ink, palette["accent"], timeline.beat_pulse(t, 0.2) if t >= kick else 0.0)
 
 
@@ -300,7 +326,7 @@ func _place_camera(t: float, rig: Transform3D) -> void:
 	var distance := lerpf(3.4, 7.0, into)
 	var height := lerpf(0.7, 1.7, into)
 	if after >= 0.0:
-		distance = 7.0 - 0.3 * timeline.bar_pulse(t, 0.6)
+		distance = 7.0 - 0.3 * _hit(timeline.since_bar(t), 0.08, 0.6)
 		height = 1.7 + 0.25 * sin(TAU * timeline.bar(t) / 8.0)
 	var offset := (outward * cos(swing) + forward * sin(swing)) * distance + Vector3.UP * height
 	var eye := steady + offset
@@ -312,8 +338,32 @@ func _place_camera(t: float, rig: Transform3D) -> void:
 	var framed := eye + (to_axis * cos(pitch) + Vector3.UP * sin(pitch)) * 50.0
 	var at_rider := rig.origin + Vector3.UP * 0.75
 	var target := at_rider.lerp(framed, smoothstep(kick - 2.0, kick + 0.2, t))
-	var punch := exp(-maxf(after, 0.0) * 3.0) if after >= 0.0 else 0.0
+	# The kick's punch rises over three frames rather than jumping in one
+	# (a one-frame jump reads as a cut), then eases away.
+	var punch := _hit(after, 0.1, 1.0) if after >= 0.0 else 0.0
 	var shake := Vector3(sin(t * 61.0), sin(t * 47.0 + 1.3), 0.0) * 0.04 * punch
-	camera.fov = FOV + 7.0 * punch
+	camera.fov = FOV + 5.0 * punch
 	camera.look_at_from_position(eye + shake, target, Vector3.UP)
-	sculpture.rotation = Vector3(0.0, atan2(eye.x, eye.z), 0.0)
+
+
+# A hit that rises over `attack` seconds and dies away over about `decay`.
+func _hit(since: float, attack: float, decay: float) -> float:
+	if since < 0.0:
+		return 0.0
+	return smoothstep(0.0, attack, since) * exp(-maxf(since - attack, 0.0) * 3.0 / decay)
+
+
+# The close follow: tight behind the board's tail and a little outside it,
+# over the astronaut's back shoulder, looking along the ring ahead with the
+# monolith towering on the inside of the curve. It sits high enough that the
+# spray passes below the lens, and banks a little with the board.
+func _place_follow_camera(t: float, rig: Transform3D) -> void:
+	var at := track(t)
+	var forward := Vector3(-sin(at.y), 0.0, cos(at.y))
+	var outward := Vector3(cos(at.y), 0.0, sin(at.y))
+	var steady := RingScript.polar(lerpf(TRACK_RADIUS, at.x, 0.7), at.y, rig.origin.y)
+	var eye := steady - forward * 3.9 + outward * 1.9 + Vector3.UP * (1.8 + 0.12 * sin(TAU * timeline.beat(t) / 2.0))
+	var target := steady + forward * 9.0 - outward * 0.5 + Vector3.UP * 0.7
+	camera.fov = 60.0
+	var bank := rig.basis.y.dot(-outward) * 0.35
+	camera.look_at_from_position(eye, target, (Vector3.UP + outward * bank).normalized())

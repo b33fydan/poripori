@@ -22,6 +22,9 @@ const PALETTES := {
 	"human": {"paper": "#2b0a14", "ink": "#f6cccc", "accent": "#ee5a5a"},
 	"solar_system": {"paper": "#271b05", "ink": "#f6e6bd", "accent": "#efc35c"},
 	"telescope": {"paper": "#1d0c33", "ink": "#e6d2fa", "accent": "#b87de8"},
+	# The B-roll's daylight: light paper, a navy ink for outlines and a deep
+	# shadow tone. The numbers are white, so their day is a blueprint blue.
+	"numbers_day": {"paper": "#eef1fa", "ink": "#1b2257", "accent": "#5a73d6", "shadow": "#22307a"},
 }
 
 # The first row of each chapter's band of the message, top to bottom (rows
@@ -34,8 +37,12 @@ const CHAPTER_ROWS := [
 
 static func colors(palette: String) -> Dictionary:
 	var out := {}
+	var entry: Dictionary = PALETTES[palette]
 	for role in ["paper", "ink", "accent"]:
-		out[role] = Color(str(PALETTES[palette][role]))
+		out[role] = Color(str(entry[role]))
+	# Shade falls toward the paper at night; light-paper palettes name a
+	# darker shadow instead.
+	out["shadow"] = Color(str(entry["shadow"])) if entry.has("shadow") else out["paper"]
 	return out
 
 
@@ -69,6 +76,6 @@ static func chapter_at_row(row: float) -> String:
 
 
 static func apply(palette: Dictionary) -> void:
-	for role in ["paper", "ink", "accent"]:
+	for role in ["paper", "ink", "accent", "shadow"]:
 		var c := (palette[role] as Color).srgb_to_linear()
 		RenderingServer.global_shader_parameter_set(role, Vector4(c.r, c.g, c.b, 1.0))

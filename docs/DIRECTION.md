@@ -17,7 +17,9 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
   - The monolith is revealed whole only at the end.
   - The pace is set in bars (`DESCENT` in `scripts/shots/opening.gd`), so chapter changes land on phrase downbeats.
 - **The ring's colour:** the ring and the night take the colour of the chapter the ring is passing.
-- **The camera:** third person from behind the astronaut, toward the monolith. It rides just outside the ring, looking in past the astronaut's back, and the board slides across the frame. The monolith turns to face the camera, so it always reads correctly.
+- **The camera:** third person from behind the astronaut, toward the monolith. It rides just outside the ring, looking in past the astronaut's back, and the board slides across the frame. A close follow (`camera=follow`) rides low behind the board's tail for short punchy cuts.
+- **The monolith stays static (owner's call, 2026-10-03),** for realism. The camera sees it from changing angles. Its facing is set so key moments happen from the front: through the opening it's front-on at 0:38 and never edge-on or from behind.
+- **The board rides like a real surfboard:** about 1.55 units long, close to the rider's height, with the nose up about 6°. It's rolled about 11° onto its toe-side rail, pivoting on that rail at the tail.
 - **The sky:** no moon (removed 2026-10-02). About 1,800 voxel stars, and floating dust for parallax, 10% of it smaller.
 
 ## The style reference
@@ -47,7 +49,13 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
 ## The structure
 
 - **Reading order:** top to bottom, as the message is read. It starts with the numbers 1 to 10 and ends with the telescope that sent it. Each chapter lights up on the sculpture in its turn. The seven chapters are in `data/arecibo/sections.json`.
-- **The cuts:** each chapter of the message gets a sped-up B-roll that explains it visually, then the film cuts back to the astronaut.
+- **The cuts:** each chapter of the message gets a B-roll, then the film cuts back to the astronaut.
+  - **The B-roll keeps the mystery (owner's call, 2026-10-03).** Each is a separate incident that echoes its chapter without explaining it, with action to reset the viewer's attention. Nothing names the message before the reveal.
+  - **Hyperlapse:** the B-roll runs the world in fast motion while the camera glides, and every frame is still a function of song time. Speed ramps can snap back to real time on a downbeat.
+  - **The numbers B-roll (`scripts/shots/broll_numbers.gd`):**
+    - Nine astronauts, each with their own trim colour, build the message's top four rows on a floating MEGAVOX island in blueprint-blue daylight.
+    - They work as a bucket brigade, and every block lands on an eighth-note.
+- **The edit:** `edits/opening.json` lists the cuts in bars, and `tools/render_edit.py` renders them into one video.
 - **1:04, the reach:** the song turns mellow (bar 32, 63.53 s). In slow motion the astronaut reaches up with one hand, and the Claude mascot is revealed bit by bit. Short B-roll cuts fly the camera low over the human figure in the middle of the message as the build-up rises.
 - **1:36, the touch:** the drop (bar 48, 95.27 s). The astronaut and the mascot touch hands as the beat kicks back in. From then on the mascot rides at the board's tip, pointing forward.
 - **The voice (from the touch onward):** "Gervis", the owner's voice character, speaks in the background like a PA or a radio transmission. The owner will write the inspiring words. Only then does text appear on screen: the spoken words, as captions.

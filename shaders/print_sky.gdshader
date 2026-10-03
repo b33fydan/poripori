@@ -7,6 +7,10 @@ shader_type sky;
 #include "res://shaders/print.gdshaderinc"
 
 uniform vec3 band_normal = vec3(0.35, 0.82, -0.45);
+// Slides the clouds across the sky: 0 at night; a function of song time in
+// a hyperlapse, so clouds race while every frame stays reproducible.
+uniform vec3 drift = vec3(0.0);
+uniform float band_width = 0.22;
 
 float hash13(vec3 p) {
 	p = fract(p * 0.1031);
@@ -39,8 +43,8 @@ void sky() {
 	vec3 d = normalize(EYEDIR);
 	vec3 col = paper.rgb;
 	float along = abs(dot(d, normalize(band_normal)));
-	float band = exp(-pow(along / 0.22, 2.0));
-	float clouds = smoothstep(0.42, 0.78, fbm(d * 3.2));
+	float band = exp(-pow(along / band_width, 2.0));
+	float clouds = smoothstep(0.42, 0.78, fbm(d * 3.2 + drift));
 	float cover = clamp(band * (0.03 + 0.4 * clouds), 0.0, 0.45);
 	col = mix(col, mix(paper.rgb, accent.rgb, 0.32), halftone(FRAGCOORD.xy, cover));
 	COLOR = col;

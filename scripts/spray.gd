@@ -56,7 +56,8 @@ func update(t: float) -> void:
 	var first := int(ceil((t - LIFE) * RATE))
 	var last := int(floor(t * RATE))
 	var slot := 0
-	var ink: Color = ink_at.call(t)
+	# A step darker than the ink: near the lens, light cubes blew out.
+	var ink: Color = (ink_at.call(t) as Color).darkened(0.18)
 	var ring_now: float = height_at.call(t)
 	for k in range(first, last + 1):
 		var born := k / RATE

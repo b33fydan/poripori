@@ -1,0 +1,13 @@
+{
+ "about": "The opening of the film: song 0:00 to 1:00. Each cut runs until the next; cuts are placed on bars so they land on the beat (a cut shows on the first frame at or after its bar). Options other than 'shot' pass to the shot.",
+ "song": "lost-in-the-void",
+ "start": 0.0,
+ "end": 60.0,
+ "cuts": [
+  {"at": 0.0, "shot": "opening"},
+  {"at_bar": 11, "shot": "broll_numbers"},
+  {"at_bar": 16, "shot": "opening"},
+  {"at_bar": 24, "shot": "opening", "camera": "follow"},
+  {"at_bar": 26.5, "shot": "opening"}
+ ]
+}

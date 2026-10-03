@@ -5,6 +5,7 @@
 global uniform vec4 paper;
 global uniform vec4 ink;
 global uniform vec4 accent;
+global uniform vec4 shadow;        // the tone shade is mixed toward: the paper at night, a deep ink by day
 global uniform vec3 key_dir;
 global uniform float halftone_px;
 global uniform float song_time;

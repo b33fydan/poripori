@@ -10,10 +10,13 @@ render_mode cull_back, specular_disabled, ambient_light_disabled;
 #include "res://shaders/print.gdshaderinc"
 
 uniform float shadow_mix = 0.6;
+// Multiplies the colour: white for MultiMesh cubes (their colour is per
+// instance), a model surface's own colour for imported models (MEGAVOX).
+uniform vec4 tint = vec4(1.0);
 
 void fragment() {
-	vec3 base = COLOR.rgb;
-	vec3 shade = mix(base, paper.rgb, shadow_mix);
+	vec3 base = COLOR.rgb * tint.rgb;
+	vec3 shade = mix(base, shadow.rgb, shadow_mix);
 	vec3 c = mix(base, shade, halftone(FRAGCOORD.xy, print_coverage(NORMAL, VIEW_MATRIX)));
 	ALBEDO = vec3(0.0);
 	EMISSION = mix(c, base, COLOR.a);

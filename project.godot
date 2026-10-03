@@ -63,3 +63,7 @@ print_scale={
 "type": "float",
 "value": 1.0
 }
+shadow={
+"type": "vec4",
+"value": Vector4(0.004, 0.006, 0.03, 1)
+}

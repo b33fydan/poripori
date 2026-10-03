@@ -35,14 +35,21 @@ var leg_r: Node3D
 var boot_l: Node3D
 var boot_r: Node3D
 var antenna_tip: Node3D
+var accent := ACCENT
 
 # Where the trail leaves the board, in rig space: the tail's underside.
-var tail_point := Vector3(-12.5 * U, -1.5 * U, 0.0)
+var tail_point := Vector3(-15.5 * U, -1.5 * U, 0.0)
+# The tail's inside (toe-side) rail, where a tilted board stays on the water.
+var rail_pivot := Vector3(-15.5 * U, -2.0 * U, 3.0 * U)
 
 
-func _init() -> void:
+# `trim` colours this astronaut's stripes, cuffs and ear discs, so a crew can
+# tell its members apart. Builders on foot leave the board out.
+func _init(trim := ACCENT, with_board := true) -> void:
 	name = "Astronaut"
-	_build_board()
+	accent = trim
+	if with_board:
+		_build_board()
 	rider = Node3D.new()
 	rider.name = "Rider"
 	add_child(rider)
@@ -57,13 +64,13 @@ func _part(pivot := Vector3.ZERO) -> Node3D:
 # --- The board -----------------------------------------------------------------
 
 func _board_half_width(x: int) -> int:
-	if x >= 11:
+	if x >= 15:
 		return 0
-	if x >= 9:
+	if x >= 13:
 		return 1
-	if x >= 7:
+	if x >= 10:
 		return 2
-	if x <= -12:
+	if x <= -15:
 		return 2
 	return 3
 
@@ -74,18 +81,18 @@ func _build_board() -> void:
 	board.name = "Board"
 	board_glow = _part(Vector3(0.0, 0.0, 0.5))
 	board_glow.name = "BoardGlow"
-	for x in range(-12, 12):
+	for x in range(-15, 16):
 		var hw := _board_half_width(x)
 		for z in range(-hw, hw + 1):
 			var deck := DECK
-			if z == 0 and x > -10 and x < 9:
-				deck = ACCENT
+			if z == 0 and x > -13 and x < 12:
+				deck = accent
 			elif absi(z) == hw and hw >= 2:
 				deck = GOLD
 			board.paint(Vector3i(x, -1, z), deck)
 			board_glow.paint(Vector3i(x, -2, z), Color(0.35, 0.9, 0.85), 1.0)
 	# A small fin under the tail.
-	board.box(Vector3i(-11, -4, 0), Vector3i(-8, -2, 1), ACCENT)
+	board.box(Vector3i(-14, -4, 0), Vector3i(-11, -2, 1), accent)
 	board.build()
 	board_glow.build()
 	add_child(board)
@@ -108,9 +115,9 @@ func _build_body() -> void:
 	torso.paint(Vector3i(-2, 6, 2), Color(1.0, 0.36, 0.30), 1.0)
 	torso.paint(Vector3i(-1, 6, 2), Color(1.0, 0.82, 0.25), 1.0)
 	torso.paint(Vector3i(0, 6, 2), Color(0.25, 0.85, 0.78), 1.0)
-	torso.paint(Vector3i(1, 4, 2), ACCENT)
-	torso.box(Vector3i(-5, 7, -3), Vector3i(-4, 9, 3), ACCENT)       # shoulder trim
-	torso.box(Vector3i(4, 7, -3), Vector3i(5, 9, 3), ACCENT)
+	torso.paint(Vector3i(1, 4, 2), accent)
+	torso.box(Vector3i(-5, 7, -3), Vector3i(-4, 9, 3), accent)       # shoulder trim
+	torso.box(Vector3i(4, 7, -3), Vector3i(5, 9, 3), accent)
 	# Backpack with two little thrusters.
 	torso.box(Vector3i(-4, 1, -6), Vector3i(4, 9, -3), SUIT_SHADE)
 	torso.box(Vector3i(-4, 8, -6), Vector3i(4, 9, -3), TRIM)
@@ -151,7 +158,7 @@ func _arm(side: int) -> Node3D:
 	var arm := _part(Vector3(0.0, 0.0, 0.0))
 	arm.name = "ArmL" if side > 0 else "ArmR"
 	arm.box(Vector3i(-1, -7, -1), Vector3i(2, 0, 2), SUIT)
-	arm.box(Vector3i(-1, -6, -1), Vector3i(2, -5, 2), ACCENT)        # cuff
+	arm.box(Vector3i(-1, -6, -1), Vector3i(2, -5, 2), accent)        # cuff
 	arm.box(Vector3i(-1, -9, -1), Vector3i(2, -7, 2), TRIM)          # glove
 	arm.build()
 	# Shoulders sit just outside the torso, near its top.
@@ -170,15 +177,15 @@ func _build_helmet() -> void:
 	shell.box(Vector3i(-6, 0, -5), Vector3i(6, 11, 6), SUIT)
 	shell.carve(Vector3i(-5, 1, -4), Vector3i(5, 10, 5))
 	# The visor's frame, and its opening through the front.
-	shell.box(Vector3i(-5, 2, 5), Vector3i(5, 10, 6), ACCENT)
+	shell.box(Vector3i(-5, 2, 5), Vector3i(5, 10, 6), accent)
 	shell.carve(Vector3i(-4, 3, 5), Vector3i(4, 9, 6))
 	# Ear discs and an antenna with a glowing tip.
-	shell.box(Vector3i(-7, 4, -1), Vector3i(-6, 8, 3), ACCENT)
-	shell.box(Vector3i(6, 4, -1), Vector3i(7, 8, 3), ACCENT)
+	shell.box(Vector3i(-7, 4, -1), Vector3i(-6, 8, 3), accent)
+	shell.box(Vector3i(6, 4, -1), Vector3i(7, 8, 3), accent)
 	shell.box(Vector3i(3, 11, 0), Vector3i(4, 13, 1), TRIM)
 	# A stripe over the crown and down the back, so the helmet reads from behind.
-	shell.box(Vector3i(-1, 10, -5), Vector3i(1, 11, 6), ACCENT)
-	shell.box(Vector3i(-1, 2, -5), Vector3i(1, 11, -4), ACCENT)
+	shell.box(Vector3i(-1, 10, -5), Vector3i(1, 11, 6), accent)
+	shell.box(Vector3i(-1, 2, -5), Vector3i(1, 11, -4), accent)
 	shell.build()
 	helmet.add_child(shell)
 	antenna_tip = _part(Vector3(0.0, 0.0, 0.0))
@@ -231,3 +238,32 @@ func pose(crouch: float, lean: float, look: float, arms := Vector4(1.15, 0.3, -0
 	# arms: x = lead arm out, y = lead arm forward, z = rear arm out, w = rear arm back.
 	arm_l.rotation = Vector3(-arms.y, 0.0, arms.x)
 	arm_r.rotation = Vector3(-arms.w, 0.0, arms.z)
+
+
+# On foot, for builders. `step` is the walk cycle's phase in radians and
+# `stride` how far the legs swing; `reach` raises both arms from the sides
+# (0) to straight out in front (1), holding a block at the chest (the helmet
+# is too big to lift one overhead); `turn` twists the torso toward where the
+# block is passed (radians); `bob` dips the body.
+func pose_on_foot(step: float, stride: float, reach: float, turn := 0.0, bob := 0.0) -> void:
+	var swing := sin(step) * stride
+	var hip_height := (9.0 - bob) * U
+	torso.position = Vector3(0.0, hip_height, 0.0)
+	torso.rotation = Vector3(0.06 * reach, turn, 0.0)
+	leg_l.position = Vector3(2.0 * U, hip_height, 0.0)
+	leg_r.position = Vector3(-2.0 * U, hip_height, 0.0)
+	leg_l.rotation = Vector3(swing, 0.0, 0.0)
+	leg_r.rotation = Vector3(-swing, 0.0, 0.0)
+	boot_l.rotation = Vector3(-swing, 0.0, 0.0)
+	boot_r.rotation = Vector3(swing, 0.0, 0.0)
+	helmet.rotation = Vector3(-0.15 * reach, turn * 0.5, 0.0)
+	# Arms swing against the legs when free, and come up to hold a block.
+	var up := -PI * 0.5 * reach
+	arm_l.rotation = Vector3(lerpf(-swing * 0.8, up, reach), 0.0, lerpf(0.12, 0.18, reach))
+	arm_r.rotation = Vector3(lerpf(swing * 0.8, up, reach), 0.0, lerpf(-0.12, -0.18, reach))
+
+
+# Where a held block of `size` sits, in the astronaut's own space: at chest
+# height between the gloves, just in front of them.
+func hands_point(size: float) -> Vector3:
+	return Vector3(0.0, 17.5 * U, 10.0 * U + size * 0.5)
