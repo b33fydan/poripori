@@ -2,6 +2,75 @@
 
 Newest entry first. Each entry covers one working slice: what was decided, how it was checked, and the exact next step.
 
+## 2026-10-03 — The whole story, 0:00 to the end (3:12)
+
+**Owner direction**
+- Yes to the placement table, and yes to plants sprouting from the planted cubes.
+- **Rims:** the monolith's should pulse in yellow only, since the rainbow didn't blend. In the B-roll, placed cubes pulse yellow too and the others get white borders.
+- **The touch:** don't extend the mascot's arm; let them reach and touch. When they touch and spark, cut immediately.
+- **The FPV dives:** fly slower.
+- **The reach:** don't cut to Astro alone in space. Instead, one continuous shot as he comes up from Earth, the camera fixed in place watching him from below, then turning to follow as he passes. Add a new cut from above and behind the mascot as Astro comes in with the planet far below, then the touch.
+- **The rest:** build the whole story now; it can be edited after.
+
+**What changed**
+- **Rims:**
+  - `shaders/monolith.gdshader`: INSTANCE_CUSTOM.g picks a cube's kind, 1 for the shared yellow pulse (the `monolith_edge` global) and 0 for a steady white border.
+  - The opening's rims are one yellow (#ffd75e), flaring on the beat.
+  - `print.gdshader` gained `vertex_flat` and `flat_amount`, so plain meshes (props) can print shaded or flat. They read COLOR as white, so they always printed flat before.
+- **`scripts/broll_kit.gd`:** what the B-rolls share. The galaxy set (a wide, bright band that wheels round), the camera with its ink pass, rim cubes, floating platforms, props, paths and the message's cells.
+- **The reach (`reach.gd`):**
+  - `view=rise` (bars 32–36 and 38–42) is one fixed camera. He rises at 0.3/s plus the jump and passes the lens near bar 39.6.
+  - `view=over` (44–46) looks from above and behind the mascot.
+  - `view=touch` (46–48.1): the mascot keeps its resting arm and faces +Z, tipped down. The gap closes as `GAP * (1-u)^2.2` from bar 44.
+  - The sparks' origin is computed for the moment of the touch. It used to be wherever the glove was on the cut's first frame, out of frame now that he rises faster.
+  - The cut to the surfing comes 6 frames after the touch.
+- **The FPV dives:** about 40 units a second, a third of the distance.
+- **`mascot.gd`:** `point()` (arms at rest or out, aimed anywhere) and `hover(phase, trail)`.
+- **`astronaut.gd`:** a `sleeping` option (closed eyes).
+- **New B-rolls**, each a floating platform in its chapter's night:
+  - **`broll_elements.gd`:** the elements' 17 cubes are pulled from a replica top row first and planted. MEGAVOX plants sprout from them, capped at 1.2 units wide by a new `max_width` on `Megavox.stand`.
+  - **`broll_formulas.gd`:** the conveyor belt, with trays carrying the 12 formula blocks in reading order, and four workers each setting in a quarter. Behind them, a readout of rows 11–29 and three watchers.
+  - **`broll_helix.gd`:** a 3D double helix (rims pulse on the strands, white on the rungs), rising inside a ring of six stations with scrolling screens.
+  - **`broll_human.gd`:** the lab, the crew moving on a station every 2 bars, the glass window, the sleeping giant (×3, rolled to show its face), the message's human figure, and a yellow scan line.
+  - **`broll_solar.gd`:** an FPV from Pluto to Mercury. Planets are assembled by streams of cubes from their crews and finished 0.9 s before the drone passes; the camera glances toward each. The Sun flares with rays on bar 80, and the ring crew rushes in and hops on the beat.
+  - **`broll_telescope.gd`:** the build (dish, rim, towers with the tall one taller, cables, the platform hauled up). On bar 86 the floor falls out from the coast (a breadth-first distance), leaving Puerto Rico; the land greens and the coast pulses. The beam fires on bar 89, and the crew boards and spirals up it with rainbow trails (`scripts/cube_trail.gd`).
+  - **`finale.gd`:** Astro and his mascot, then the crew in a V each with its own, boosting away into the galaxy.
+- **`opening.gd`:**
+  - `camera=finale`: the whole monolith, lit by a wave through the rows the ring never reached, pulsing wide (0.3 to 1.2), with a big Earth (20-unit cubes) behind.
+  - The mascot moves to the inner side in `camera=follow`.
+  - The descent reaches row 59 at bar 64.
+- **Puerto Rico:**
+  - The owner approved downloading Natural Earth's `ne_10m_land.geojson` (10.2 MB) to scratch.
+  - `tools/make_pr_mask.py` writes `data/earth/puerto-rico-mask.png` and `.json` (127 × 48 cells, the main island, Vieques and Culebra). The telescope lands on land 7 cells (about 13 km) inland, which matches the NSF's "some 10 miles inland".
+  - Sources are in `data/earth/SOURCES.md` and the new `docs/FACTS.md`: Wikipedia and NSF 17-538 for the location and the structure.
+- **ffmpeg:** at 17:40 something outside this session installed Homebrew's `ffmpeg-full` (9.0.2), whose libvpx upgrade broke the plain `ffmpeg` 8.0.1. Homebrew was left alone. `tools/media.py` now picks the first ffmpeg/ffprobe that starts (ffmpeg-full first), and all tools use it.
+- **`edits/film.json`:** the whole song, 23 cuts, 0 to 192.32 s.
+
+**How it was checked**
+- Stills of every new shot, with fixes from them:
+  - **the touch:** the mascot's body hid the hands, so it now faces the camera and reaches sideways;
+  - **the over view:** reframed twice;
+  - **the elements:** some plants were huge bushes;
+  - **the formulas:** the belt hid the workers;
+  - **the Solar System:** planets were half built as they passed, at the frame's edge;
+  - **the telescope:** the flyers left frame too early;
+  - **the finale:** the camera started inside the V;
+  - **the follow cut:** the mascot blocked the lens.
+- **Full render:** `renders/film.mp4`, 5,770 frames, blur 4 × 0.5, about 75 min. `check_cuts.py`: all 22 cuts on their planned frames, no others.
+- **The touch:** sparks start on frame 2858, the drop's own frame, and the cut comes at 2864.
+- **Exposure** (share of pixels with luma > 0.95):
+  - none above 0.2% except the telescope's beam, at 4.7%: the light itself, meant to be the brightest thing.
+  - The Sun's flare reaches 18% above 0.85 but doesn't clip.
+  - The suit in the touch close-up is luma 0.86.
+- **Previews:** `renders/film-preview.mp4` (720p, 61 MB) and `renders/film-phone.mp4` (540p, 27 MB, under the phone app's 30 MB limit).
+
+**Next step**
+- The owner reviews the whole film and gives notes.
+- Then the Gervis voice lines and their captions (the owner is writing them).
+- Then the end-card credits (MEGAVOX wording from its creator, the music, Ocular Sounds if used).
+
+---
+
 ## 2026-10-03 — Notes on the first 1:47, and the outline of the rest
 
 **Owner direction**

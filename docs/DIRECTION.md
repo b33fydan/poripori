@@ -22,7 +22,8 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
 - **The board rides like a real surfboard:** about 1.55 units long, close to the rider's height. It's rolled about 11° onto its toe-side rail, pivoting on that rail at the tail.
 - **The nose is up all the time (owner's call, 2026-10-03):** 12° up, and the swell may tip it by 3° at most, so it's always 9–15° above level. The ring's descent no longer tips it (it used to point the nose down as much as 50° while the ring dropped fast).
 - **The rider's stance (owner's call, 2026-10-03):** from the very first frame he holds the groove's stance, arms open and low and knees bent, breathing with the bar in the intro. Standing upright with arms down looked stiff. The kick still springs him and the drop still lands him.
-- **The monolith's rims (owner's call, 2026-10-03):** once a row is lit, every cube wears a thin rim of light round each face, and its outlines take the same colour. The whole monolith changes colour together, stepping through the rainbow one colour a beat and flaring on the beat (`shaders/monolith.gdshader`, the `monolith_edge` global).
+- **The monolith's rims (owner's call, 2026-10-03):** once a row is lit, every cube wears a thin rim of light round each face, and its outlines take the same colour. The whole monolith pulses together in one yellow, flaring on every beat (`shaders/monolith.gdshader`, the `monolith_edge` global). A rainbow stepping one colour a beat was tried first and dropped: the colours didn't blend.
+- **Rims in the B-roll (owner's call, 2026-10-03):** a cube once placed pulses in the same yellow; a cube not yet placed (in a pile, in flight, in a replica) wears a steady white border, so none looks bland.
 - **The sky:** no moon (removed 2026-10-02). About 1,800 voxel stars, and floating dust for parallax, 10% of it smaller.
 
 ## The style reference
@@ -61,28 +62,44 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
     - They work as a bucket brigade, and every block lands on an eighth-note.
 - **The edit:** `edits/opening.json` lists the cuts in bars, and `tools/render_edit.py` renders them into one video.
 - **1:04, the reach (built 2026-10-03, `scripts/shots/reach.gd`, cuts in `edits/film.json`):**
-  - **Bars 32–36:** he jumps off the board and punches one fist up in triumph (owner's direction, 2026-10-03). The camera follows him up as Earth falls away below and shrinks (`scripts/voxel_earth.gd`, coastlines from Natural Earth, the Caribbean turned to the camera). The fist goes up and out on the diagonal, since the helmet is taller than his arm.
-  - **Bars 36–38:** FPV dive 1, from above the top rows plunging down the face and through the ring's hole. Both dives are smooth and locked in (owner's call, 2026-10-03): one straight line at a fixed pitch, no roll, no turns.
-  - **Bars 38–42:** top view, looking down on him over Earth; he lowers the fist.
-  - **Bars 42–44:** FPV dive 2, down through the DNA rows to the still-dark human figure.
-  - **Bars 44–46:** the reveal. From below, his glove rises on the diagonal; straight up, it would hide beside the big helmet.
-  - **Bars 46–48.5:** the touch (owner's direction, 2026-10-03). The mascot is revealed above him, looking down, and slides its arm out toward him. The camera closes slowly on their hands, and the gap closes exactly on the drop's first kick: sparks and stars fly (`scripts/sparks.gd`).
+  - **Bars 32–36 and 38–42, one continuous take (owner's direction, 2026-10-03):** a camera fixed in space above him. He springs off the board and punches a fist up and out in triumph (straight up, it would hide beside the big helmet), and comes up from Earth toward the lens (`scripts/voxel_earth.gd`, coastlines from Natural Earth, the Caribbean turned to the camera). He passes it and keeps rising, the camera turning in place to follow. The take resumes on the same clock after FPV dive 1, so it plays as one shot.
+  - **Bars 36–38:** FPV dive 1, from above the top rows plunging down the face. Both dives are smooth and locked in (owner's call, 2026-10-03): one straight line at a fixed pitch, no roll, no turns, and slow enough to read, about 40 units a second.
+  - **Bars 42–44:** FPV dive 2, down through the DNA rows to the still-dark human figure; he lowers the fist meanwhile.
+  - **Bars 44–46:** third person from above and behind the mascot, which hangs in space looking down; he comes up toward it, glove raised, Earth far below (owner's direction).
+  - **Bars 46–48.1:** the touch. Facing them, the camera closes slowly on their hands. No telescoping arm (the owner's call): they reach and touch, exactly on the drop's first kick. Sparks and stars fly (`scripts/sparks.gd`) and the film cuts away six frames later, without hanging.
   - **The board:** he leaves it to float and lands back on it at the drop (owner's call).
 - **1:36, the touch:** the drop (bar 48, 95.27 s). The astronaut and the mascot touch hands as the beat kicks back in.
   - **Where the ring is:** while the reach plays, the ring descends to the human figure's feet (row 54.6). The rider is moved round the ring unseen, so the drop meets the monolith's front.
   - **From bar 48.5:** back on the ring in the human chapter's red, with the lit human figure towering, and the mascot flying beside him leaving little stars.
 - **The voice (from the touch onward):** "Gervis", the owner's voice character, speaks in the background like a PA or a radio transmission. The owner will write the inspiring words. Only then does text appear on screen: the spoken words, as captions.
 
-## The rest of the story (owner's outline, 2026-10-03)
+## The rest of the story (owner's outline, 2026-10-03; built the same day)
 
-Each chapter of the message gets a hyperlapse B-roll on a floating platform in the galaxy. They stay separate incidents that keep the mystery. Where each goes in the song is still to be confirmed, and each is built and approved one at a time.
+Each chapter of the message gets a hyperlapse B-roll on a floating platform in the galaxy. They stay separate incidents that keep the mystery. The owner approved the placement below and asked for the whole story to be built at once, to be edited after (`edits/film.json`):
+
+| Song time | Bars | What plays |
+|---|---|---|
+| 0:22–0:32 | 11–16 | Numbers (`broll_numbers.gd`) |
+| 0:36–0:44 | 18–22 | Elements (`broll_elements.gd`): the replica taken apart, its cubes planted; little MEGAVOX plants sprout from them (the owner's yes) |
+| 0:53–1:02 | 26.5–31 | DNA formulas (`broll_formulas.gd`): the belt, the readout |
+| 1:03–1:36 | 32–48.1 | The reach and the touch |
+| 1:36–1:47 | 48.1–54 | Surfing with the mascot |
+| 1:47–1:55 | 54–58 | DNA helix (`broll_helix.gd`) |
+| 1:55–2:07 | 58–64 | Surfing, into the Solar System's gold (the ring reaches row 59 at bar 64) |
+| 2:07–2:23 | 64–72 | Human lab (`broll_human.gd`), in the calm break |
+| 2:23–2:43 | 72–82 | Solar System FPV (`broll_solar.gd`); the Sun flares on the peak at 2:39 |
+| 2:43–3:02 | 82–92 | The telescope (`broll_telescope.gd`): built on the peak, the floor falls to Puerto Rico as the music drops at 2:51, the beam at 2:57 |
+| 3:02–3:08 | 92–95 | The crew surfs away with their mascots (`finale.gd`), on the outro's swell |
+| 3:08–3:12 | 95–end | The whole monolith, lit and pulsing, Earth behind (`opening.gd camera=finale`) |
+
+The last shot starts at bar 95 rather than 96 as first proposed: from bar 96 the song is only 1.8 s of near silence.
 
 - **Numbers:** built (the bucket brigade).
 - **Elements (atomic numbers):** many astronauts take apart a replica of that part of the message, pulling its squares out of the sculpture in the middle one by one and planting them in the ground around them.
 - **The DNA formulas:** astronauts at a conveyor belt work on parts of it as they come down the belt, while others in the background examine the sequences.
 - **The DNA helix:** astronauts at computer stations, as the double helix materialises from the ground up in the middle.
 - **The human:** astronauts in a lab, switching stations. In front of them is a huge glass window, and behind it a large astronaut, apparently asleep, beside the message's human figure, as if they were studying the figure and comparing it with the large astronaut.
-- **The Solar System:** an FPV flight, flying horizontally and dodging between the planets as astronauts assemble each one. It starts from the last planet and ends at the Sun, which shines bright; all the astronauts gather round it, jumping for joy.
+- **The Solar System:** an FPV flight, flying horizontally and dodging between the planets as astronauts assemble each one. It starts from the last planet and ends at the Sun, which shines bright; all the astronauts gather round it, jumping for joy. As built: Pluto in, as the 1974 message has it; the weave is smooth with a light bank (the dives' lesson).
 - **The telescope, and the end:**
   - astronauts build the telescope from the ground up;
   - the floor round it falls away, revealing the shape of Puerto Rico, and the camera zooms out: the telescope was built on Puerto Rico;
