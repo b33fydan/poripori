@@ -2,6 +2,64 @@
 
 Newest entry first. Each entry covers one working slice: what was decided, how it was checked, and the exact next step.
 
+## 2026-10-03 — Notes on the first 1:47, and the outline of the rest
+
+**Owner direction**
+- The FPV dives must be smooth and locked in: no sudden turns or rotation.
+- The jump to the planet: follow him up, leaving Earth behind, as he raises one fist overhead in triumph.
+- The touch: reveal the mascot looking down and extending its arm, zoom slowly to their hands, then they touch and sparks fly.
+- The mascot beside him should look like it's flying forward.
+- He looks stiff when he starts surfing: hold the stance from just after the beat starts (arms open, lowered a bit) all the time.
+- The lit monolith looks bland: make its white edges pulse in different colours, in unison.
+- The board's front nose should be inclined slightly upward all the time.
+- The B-roll timelapses belong out in the galaxy, on floating platforms, not in an enclosed room.
+- Then the outline for every remaining chapter and the ending (recorded in `docs/DIRECTION.md`, "The rest of the story").
+
+**What changed**
+- **The board (`opening.gd` `rig_transform`):** heading comes from the water at the current moment, so the ring's descent no longer tips the nose down. A probe showed the old nose went down as far as 52° during the fast descent and 11° at the kick. Now 12° up, plus at most ±3° from the swell, so always 9–15° above level.
+- **The stance (`_pose_rider`):** the groove pose (crouch 0.42, lean 0.16, arms open) from frame one, breathing with the bar. The anticipation crouch, the kick's spring and the drop's landing are kept.
+- **The monolith's rims:**
+  - `shaders/monolith.gdshader` draws a rim round every face of a lit cube (lit amount in INSTANCE_CUSTOM), in the colour of a new global `monolith_edge`.
+  - Lit cubes write roughness 0.2, and `ink.gdshader` colours outlines on those pixels the same.
+  - Godot 4.6 stores roughness as is (measured: 0.2 reads 0.2), not the 127/255 packing older docs describe.
+  - `opening.gd` steps the colour through 8 rainbow hues, one a beat, flaring on the beat, from the kick.
+- **The mascot:** flies at the rider's shoulder (1.5 behind, 0.5 out, 1.35 up), facing ahead turned 41° toward the camera so its eyes show, tipped forward 0.42 rad, banking, with legs trailing (`hover(phase, trail)`) and arms swept back (new `point()` in `mascot.gd`).
+- **The FPV dives:** each is one straight line at a fixed pitch, with up always world-up: no roll, no turns. Dive 2 eases off and tips gently (slerp, last half) toward the human figure.
+- **The reach (`reach.gd`):**
+  - **The jump:** a jump impulse added to his rise (1.6 units, dying over 0.7 s). The camera follows a beat behind, and Earth recedes from 980 to 1,700 units and sinks.
+  - **The fist:** goes up and out on the diagonal with a punch overshoot (the helmet is taller than the arm, so straight up would hide it), and he leans away.
+  - **The float pose** now blends part by part from the surf stance. It used to snap when `up` reached 1.
+- **The touch:** moved to start at bar 46 (the reveal is now bars 44–46).
+  - It opens on the mascot above, looking down at him and toward the camera, its right arm pointed down the line at his glove and sliding out.
+  - The camera closes from the pair to their hands by the drop.
+  - `scripts/sparks.gd`: 110 streaks, stretched along their travel, with drag. They fire with the star burst on the drop.
+- **The numbers B-roll:**
+  - Now on its island out in the galaxy, in a new silver night palette `numbers_space`, with `Space` for the stars.
+  - The sky wheels round (`Space.update(..., turn)`), and the galaxy band is laid across the view, wider and brighter (new `band_glow` and `band_cover` uniforms in `print_sky.gdshader`).
+- **`edits/film.json`:** touch at bar 46.
+
+**How it was checked**
+- Stills of every changed shot; fixes from those:
+  - the mascot read as a box from behind, then covered the rider, before settling at the shoulder;
+  - the fist hid beside the helmet;
+  - the touch close-up was too tight;
+  - the galaxy band was too faint.
+- **Full render:** `renders/film.mp4`, 3,216 frames, blur 4 × 0.5. `check_cuts.py`: all 11 cuts on their planned frames, no others.
+- **The FPV dives:** frame differences rise and fall smoothly with speed, with no single-frame spikes.
+- **The touch:** the sparks begin on frame 2858, the drop's own frame (its blurred moments straddle 95.266 s).
+- **Exposure:** near-clipped pixels (luma > 0.95) at most 0.6%, in the touch.
+  - The touch's 0.85 count reaches 8.9%, because the off-white suit (luma 0.86) fills the close-up; it isn't blown out.
+  - Every other cut peaks at or under 2.8%.
+- **The preview:** `renders/film-preview.mp4` (720p, 40 MB).
+
+**Next step**
+- The owner reviews the new 0:00–1:47.
+- Confirm where each new B-roll sits in the song (proposal: elements and formulas in the first minute as the ring passes their colours; DNA helix, human, Solar System and the telescope ending after the drop).
+- Then build them one at a time, in story order, starting with the elements.
+- Before the Puerto Rico reveal: a cited source for its outline (Natural Earth 10 m, public domain) and for the telescope's location, in `docs/FACTS.md`.
+
+---
+
 ## 2026-10-03 — The reach and the touch (song 1:03–1:47)
 
 **Owner direction**
