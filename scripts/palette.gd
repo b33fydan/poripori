@@ -25,6 +25,9 @@ const PALETTES := {
 	# The B-roll's daylight: light paper, a navy ink for outlines and a deep
 	# shadow tone. The numbers are white, so their day is a blueprint blue.
 	"numbers_day": {"paper": "#eef1fa", "ink": "#1b2257", "accent": "#5a73d6", "shadow": "#22307a"},
+	# The B-roll out in the galaxy: the numbers' silver night, on floating
+	# platforms (the owner asked for open space, not a sky).
+	"numbers_space": {"paper": "#0b1030", "ink": "#d3daf2", "accent": "#9fb0e6"},
 	# Home: the deep navy night round Earth, for the reach and the touch.
 	"home": {"paper": "#060a22", "ink": "#c4d3fa", "accent": "#4f8fe6"},
 }

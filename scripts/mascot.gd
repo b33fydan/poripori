@@ -9,7 +9,9 @@ extends Node3D
 # body's height.
 #
 # Every voxel is P units. The arms telescope: reach() slides one out of the
-# body, for the moment it touches the astronaut's glove.
+# body, for the moment it touches the astronaut's glove, and point() aims
+# one anywhere. hover(phase, trail) bobs it, the legs paddling, swung back
+# by `trail` when it flies.
 #
 # Mascot space: it faces +Z, its feet at y = 0, centred on x and z.
 
@@ -87,18 +89,32 @@ func _arm(key: String, side: float) -> Node3D:
 # Arm lengths from 0 (the resting two voxels) to 1 (fully out), and where
 # each points: raise lifts it from sideways toward up, in radians.
 func reach(left: float, right: float, raise_left := 0.0, raise_right := 0.0) -> void:
-	_set_arm(arm_l, "l", left, raise_left)
-	_set_arm(arm_r, "r", right, raise_right)
+	_set_arm(arm_l, "l", left, Basis(Vector3.BACK, raise_left))
+	_set_arm(arm_r, "r", right, Basis(Vector3.BACK, -raise_right))
 
 
-func _set_arm(arm: Node3D, key: String, amount: float, raise: float) -> void:
+# One arm out by `amount` (0 to 1), pointing along `direction` in mascot
+# space (it should lean to the arm's own side, or the arm crosses the body).
+func point(left: bool, amount: float, direction: Vector3) -> void:
+	var arm := arm_l if left else arm_r
+	var side: float = arm.get_meta("side")
+	var from := Vector3(side, 0.0, 0.0)
+	var to := direction.normalized()
+	var axis := from.cross(to)
+	var basis := Basis.IDENTITY
+	if axis.length() > 1e-5:
+		basis = Basis(axis.normalized(), from.angle_to(to))
+	_set_arm(arm, "l" if left else "r", amount, basis)
+
+
+func _set_arm(arm: Node3D, key: String, amount: float, basis: Basis) -> void:
 	var side: float = arm.get_meta("side")
 	var length := lerpf(2.0, float(ARM_CUBES), clampf(amount, 0.0, 1.0))
 	var pieces: Array = _arm_cubes[key]
 	for i in range(pieces.size()):
 		var piece: MeshInstance3D = pieces[i]
 		piece.position = Vector3(side * minf(i + 0.5, length - 0.5) * P, 0.0, 0.0)
-	arm.rotation = Vector3(0.0, 0.0, side * raise)
+	arm.basis = basis
 
 
 # The tip of an arm, in mascot space.
@@ -114,9 +130,13 @@ func height() -> float:
 	return (LEG + H) * P
 
 
-# A little hover: the body bobs and the legs paddle, from a phase in radians.
-func hover(phase: float) -> void:
+# A little hover: the body bobs and the legs paddle, from a phase in
+# radians. `trail` swings the legs back from the hips (radians), for flying.
+func hover(phase: float, trail := 0.0) -> void:
 	body.position.y = 0.025 * sin(phase)
+	var hip := Vector3(0.0, LEG * P, 0.0)
 	for i in range(legs.size()):
 		var leg: Node3D = legs[i]
-		leg.position.y = body.position.y + 0.012 * sin(phase * 2.0 + i * 1.6)
+		var swing := Basis(Vector3.RIGHT, trail + 0.12 * sin(phase * 2.0 + i * 1.6) * minf(trail * 3.0, 1.0))
+		var lift := Vector3(0.0, body.position.y + 0.012 * sin(phase * 2.0 + i * 1.6), 0.0)
+		leg.transform = Transform3D(swing, hip - swing * hip + lift)

@@ -67,3 +67,7 @@ shadow={
 "type": "vec4",
 "value": Vector4(0.004, 0.006, 0.03, 1)
 }
+monolith_edge={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}

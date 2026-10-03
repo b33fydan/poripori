@@ -65,9 +65,14 @@ const JUMP_BAR := 40.0       # the rider is moved round the ring here, unseen
 const FRONT_AFTER_DROP := 6.4  # seconds after the drop the camera meets the front
 const FRONT_AT := 38.0       # song time when the monolith faces the camera
 # The board rides like a surfboard on water: nose up, rolled onto its
-# toe-side rail, pivoting on that rail at the tail.
-const NOSE_UP := 14.0        # clearly nose-up, the owner asked
+# toe-side rail, pivoting on that rail at the tail. The nose is up all the
+# time (the owner asked): the swell may tip it by SLOPE_LIMIT at most, so it
+# is always 9 to 15 degrees above level.
+const NOSE_UP := 12.0
+const SLOPE_LIMIT := 0.0524  # 3 degrees
 const RAIL := 11.0
+# The monolith's rims step through the rainbow, one colour a beat.
+const EDGE_HUES := [0.0, 0.07, 0.14, 0.33, 0.5, 0.6, 0.75, 0.88]
 
 var options := {}
 var timeline
@@ -268,10 +273,18 @@ func board_position(t: float) -> Vector3:
 func rig_transform(t: float) -> Transform3D:
 	var e := 0.02
 	var p := board_position(t)
-	var ahead := board_position(t + e)
-	var behind := board_position(t - e)
-	var x := (ahead - behind).normalized()
+	# The way it heads, along the water as it is now: the ring's descent
+	# carries the water down, and must not tip the nose down with it.
 	var at := track(t)
+	var at_ahead := track(t + e)
+	var at_behind := track(t - e)
+	var ahead := surface_point(t, at_ahead.x, at_ahead.y)
+	var behind := surface_point(t, at_behind.x, at_behind.y)
+	var x := (ahead - behind).normalized()
+	# It rides the swell only a little, so the nose stays up all the time.
+	var level := Vector3(x.x, 0.0, x.z).normalized()
+	var slope := clampf(asin(clampf(x.y, -1.0, 1.0)) * 0.35, -SLOPE_LIMIT, SLOPE_LIMIT)
+	x = level * cos(slope) + Vector3.UP * sin(slope)
 	var d := 0.3
 	var dr := surface_point(t, at.x + d, at.y) - surface_point(t, at.x - d, at.y)
 	var da := surface_point(t, at.x, at.y + d / at.x) - surface_point(t, at.x, at.y - d / at.x)
@@ -288,7 +301,7 @@ func rig_transform(t: float) -> Transform3D:
 	# Nose up and onto the rail, more of both once surfing; the tail's
 	# inside rail stays where it was, on the water.
 	var surf := _surf(t)
-	var tilt := Basis(Vector3.BACK, deg_to_rad(NOSE_UP * lerpf(0.75, 1.0, surf))) * Basis(Vector3.RIGHT, deg_to_rad(RAIL * lerpf(0.5, 1.0, surf)))
+	var tilt := Basis(Vector3.BACK, deg_to_rad(NOSE_UP)) * Basis(Vector3.RIGHT, deg_to_rad(RAIL * lerpf(0.5, 1.0, surf)))
 	var pivot: Vector3 = astronaut.rail_pivot
 	return xf * Transform3D(tilt, pivot - tilt * pivot)
 
@@ -325,6 +338,7 @@ func update(t: float) -> void:
 	var ink: Color = palette["ink"]
 	var pulse: float = timeline.beat_pulse(t, 0.3) if t >= kick else 0.0
 	sculpture.update(t, _row_lit, pulse, paper.lerp(ink, 0.2), paper)
+	_set_edge_glow(t)
 	var mode := str(options.get("camera", ""))
 	var diving := mode.begins_with("fpv")
 	astronaut.visible = not diving
@@ -333,7 +347,7 @@ func update(t: float) -> void:
 	stars.visible = mascot.visible
 	if mascot.visible:
 		mascot.transform = _mascot_transform(t)
-		mascot.hover(TAU * timeline.beat(t) * 0.5)
+		_pose_mascot(t)
 		stars.update(t)
 	if mode == "follow":
 		_place_follow_camera(t, rig)
@@ -345,21 +359,25 @@ func update(t: float) -> void:
 
 
 func _pose_rider(t: float) -> void:
-	# The kick springs the rider; the drop lands it back on the board.
+	# The rider holds the groove's stance from the very start, arms open and
+	# low, knees bent (the owner's call: upright with arms down looked
+	# stiff). The kick springs it; the drop lands it back on the board.
 	var before := t - (drop if t >= drop else kick)
-	var glide_arms := Vector4(0.55, 0.15, -0.45, 0.15)
 	var surf_arms := Vector4(1.2, 0.35, -0.95, 0.4)
-	var crouch := 0.3 + 0.06 * sin(TAU * timeline.bar(t) / 2.0)
-	var lean := 0.05
-	var look := 0.55
-	var arms := glide_arms
+	# In the intro it breathes with the bar; from the kick it dips on the beat.
+	var crouch := 0.42 + 0.06 * sin(TAU * timeline.bar(t) / 2.0)
+	var lean := 0.16
+	var look := lerpf(0.55, 0.9, smoothstep(6.0, kick - 0.5, t))
+	var arms := surf_arms
+	arms.x += 0.1 * sin(TAU * timeline.bar(t) / 2.0)
+	arms.z -= 0.08 * sin(TAU * timeline.bar(t) / 2.0 + 1.0)
 	var stretch := 1.0
 	if before > -0.4 and before < 0.0:
 		# Anticipation: a deep crouch, arms tucked, just before the kick.
 		var u := smoothstep(-0.4, -0.05, before)
 		crouch = lerpf(crouch, 1.0, u)
 		lean = lerpf(lean, 0.38, u)
-		arms = glide_arms.lerp(Vector4(0.25, 0.5, -0.2, 0.1), u)
+		arms = arms.lerp(Vector4(0.25, 0.5, -0.2, 0.1), u)
 		stretch = 1.0 - 0.07 * u
 	elif before >= 0.0:
 		# The spring, then the groove: a dip on every beat.
@@ -367,7 +385,7 @@ func _pose_rider(t: float) -> void:
 		var settle := smoothstep(0.0, 0.5, before)
 		crouch = lerpf(0.0, 0.42, settle) + 0.2 * timeline.beat_pulse(t, 0.32)
 		lean = lerpf(0.0, 0.16, settle)
-		look = lerpf(0.55, 0.9, settle)
+		look = lerpf(0.55, 0.9, settle) if t < drop else 0.9
 		arms = Vector4(1.5, 0.45, -1.35, 0.55).lerp(surf_arms, settle)
 		arms.x += 0.12 * sin(TAU * timeline.beat(t) / 2.0)
 		stretch = 1.0 + 0.09 * spring * cos(before * 22.0)
@@ -418,6 +436,18 @@ func _place_camera(t: float, rig: Transform3D) -> void:
 	camera.look_at_from_position(eye + shake, target, Vector3.UP)
 
 
+# The lit monolith's rims and outlines: every cube's together, a new colour
+# of the rainbow on each beat, flaring on the beat and easing to a glow.
+# Nothing is lit before the kick.
+func _set_edge_glow(t: float) -> void:
+	var beat := floori(timeline.beat(t))
+	var hue: float = EDGE_HUES[posmod(beat, EDGE_HUES.size())]
+	var flare: float = timeline.beat_pulse(t, 0.35)
+	var color := Color.from_hsv(hue, 0.62, 0.95).srgb_to_linear()
+	var strength := (0.6 + 0.4 * flare) * smoothstep(kick - 0.05, kick + 0.3, t)
+	RenderingServer.global_shader_parameter_set("monolith_edge", Vector4(color.r, color.g, color.b, strength))
+
+
 # A hit that rises over `attack` seconds and dies away over about `decay`.
 func _hit(since: float, attack: float, decay: float) -> float:
 	if since < 0.0:
@@ -443,24 +473,37 @@ func _place_follow_camera(t: float, rig: Transform3D) -> void:
 
 # --- The mascot, after the drop -----------------------------------------------------
 
-# Beside the rider, a little ahead and above, on the camera's side, turned
-# three-quarters toward the camera so its face shows; it bobs with the beat.
+# Beside the rider, at its shoulder and above, on the camera's side. It
+# flies forward (the owner asked): facing ahead, turned toward the camera
+# just enough that its eyes show (they are on its front face), tipped forward
+# into the flight with its arms swept back and its legs trailing. It bobs
+# with the beat and banks gently.
 func _mascot_frame(t: float) -> Array:
 	var at := track(t)
 	var forward := Vector3(-sin(at.y), 0.0, cos(at.y))
 	var outward := Vector3(cos(at.y), 0.0, sin(at.y))
 	var origin := board_position(t)
 	var bob: float = 0.08 * sin(TAU * timeline.beat(t) * 0.5)
-	return [origin + forward * 0.55 + outward * 0.6 + Vector3.UP * (1.3 + bob), forward, outward]
+	return [origin - forward * 1.5 + outward * 0.5 + Vector3.UP * (1.35 + bob), forward, outward]
 
 
 func _mascot_transform(t: float) -> Transform3D:
 	var frame := _mascot_frame(t)
-	var facing: Vector3 = ((frame[1] as Vector3) * 0.6 + (frame[2] as Vector3) * 0.8).normalized()
+	var forward: Vector3 = frame[1]
+	var facing := (forward * 0.75 + (frame[2] as Vector3) * 0.66).normalized()
 	var basis := Basis.looking_at(-facing, Vector3.UP)
-	# A little bank toward the way it's flying.
-	basis = Basis((frame[1] as Vector3), 0.12 * sin(TAU * timeline.bar(t) / 4.0)) * basis
+	# Bank into the curve, rocking with the phrase, then tip forward.
+	basis = Basis(forward, 0.12 + 0.1 * sin(TAU * timeline.bar(t) / 4.0)) * basis
+	basis = basis * Basis(Vector3.RIGHT, 0.42)
 	return Transform3D(basis, frame[0])
+
+
+func _pose_mascot(t: float) -> void:
+	var beat: float = timeline.beat(t)
+	mascot.hover(TAU * beat * 0.5, 0.55)
+	var flap := 0.12 * sin(TAU * beat)
+	mascot.point(true, 0.15, Vector3(1.0, -0.15 + flap, -0.75))
+	mascot.point(false, 0.15, Vector3(-1.0, -0.15 + flap, -0.75))
 
 
 func _star_source(t: float) -> Vector3:
@@ -474,52 +517,35 @@ func _star_amount(t: float) -> float:
 
 # --- The FPV dives ----------------------------------------------------------------------
 
-# An FPV drone diving down the monolith's face: fast, wide, banking into its
-# turns. The path is in the monolith's own frame (x along its rows toward
-# the viewer's right, y up, z out of its face), so it follows the face
-# however the monolith stands. Both pass down through the ring's hole.
-# 1 (bars 36-38): from above the top rows, plunging down the face, speeding up.
-# 2 (bars 42-44): faster and closer, down past the rows to the human figure,
-#    slowing at the end to look at it (dark: the ring hasn't reached it yet).
+# An FPV drone diving down the monolith's face, smooth and locked in (the
+# owner asked): it flies one straight line at a steady pitch, never rolls
+# and never turns. The path is in the monolith's own frame (x along its rows
+# toward the viewer's right, y up, z out of its face), so it follows the
+# face however the monolith stands. Both pass down through the ring's hole.
+# 1 (bars 36-38): from above the top rows, plunging down the face, gathering
+#    speed.
+# 2 (bars 42-44): closer, down past the rows to the human figure, easing
+#    off at the end as it tips gently toward it (dark: the ring hasn't
+#    reached it yet).
 func _place_fpv_camera(t: float, dive: int) -> void:
 	var a: float = timeline.bar_time(36.0 if dive == 1 else 42.0)
 	var b: float = timeline.bar_time(38.0 if dive == 1 else 44.0)
-	var keys: Array
-	if dive == 1:
-		keys = [Vector3(-70.0, 330.0, 95.0), Vector3(-25.0, 250.0, 50.0), Vector3(18.0, 160.0, 28.0), Vector3(-8.0, 80.0, 20.0), Vector3(4.0, 10.0, 26.0)]
-	else:
-		keys = [Vector3(45.0, 85.0, 60.0), Vector3(-5.0, 20.0, 34.0), Vector3(-22.0, -55.0, 22.0), Vector3(-16.0, -100.0, 30.0)]
+	var from := Vector3(-26.0, 330.0, 44.0) if dive == 1 else Vector3(22.0, 95.0, 30.0)
+	var to := Vector3(-14.0, 20.0, 18.0) if dive == 1 else Vector3(-6.0, -84.0, 19.0)
 	var u := clampf((t - a) / (b - a), 0.0, 1.0)
-	u = pow(u, 1.5) if dive == 1 else 1.0 - pow(1.0 - u, 1.6)
-	# Derivatives sample past the path's ends, where the curve extends
-	# smoothly; clamping there gave the first frames a false, huge bank.
-	var p := _fpv_point(keys, u)
-	var ahead := _fpv_point(keys, u + 0.02)
-	var behind := _fpv_point(keys, u - 0.02)
+	# Speed: dive 1 gathers it from a running start; dive 2 sheds it at the end.
+	u = lerpf(u, u * u, 0.45) if dive == 1 else lerpf(u, 1.0 - (1.0 - u) * (1.0 - u), 0.6)
 	var face: Vector3 = sculpture.basis.z.normalized()
 	var right: Vector3 = sculpture.basis.x.normalized()
 	var to_world := func(q: Vector3) -> Vector3: return sculpture.position + right * q.x + Vector3.UP * q.y + face * q.z
-	var eye: Vector3 = to_world.call(p)
-	var velocity: Vector3 = to_world.call(ahead) - to_world.call(behind)
-	var look := (velocity.normalized() - face * 0.55).normalized()
+	var eye: Vector3 = to_world.call(from.lerp(to, u))
+	# One fixed pitch for the whole dive: down along the line of flight and
+	# in toward the face, so the rows stream up the frame.
+	var line: Vector3 = (to_world.call(to) - to_world.call(from)).normalized()
+	var look := (line - face * 0.7).normalized()
 	if dive == 2:
-		# Pull up to look at the human figure as the dive ends.
+		# The gentle tip toward the human figure, over the last part.
 		var human: Vector3 = to_world.call(Vector3(-16.0, -112.0, 0.0))
-		look = look.lerp((human - eye).normalized(), smoothstep(0.7, 1.0, u)).normalized()
-	var bend: Vector3 = to_world.call(ahead) - 2.0 * eye + to_world.call(behind)
-	var side := look.cross(Vector3.UP).normalized()
-	var roll := clampf(-bend.dot(side) * 0.6, -0.55, 0.55) * (1.0 - smoothstep(0.85, 1.0, u) * float(dive == 2))
-	var up := Vector3.UP.rotated(look, roll)
+		look = look.slerp((human - eye).normalized(), 0.6 * smoothstep(0.5, 1.0, u))
 	camera.fov = 100.0
-	camera.look_at_from_position(eye, eye + look * 10.0, up)
-
-
-func _fpv_point(keys: Array, u: float) -> Vector3:
-	var f := u * (keys.size() - 1)
-	var i := clampi(int(floor(f)), 0, keys.size() - 2)
-	var s := f - i
-	var p0: Vector3 = keys[maxi(i - 1, 0)]
-	var p1: Vector3 = keys[i]
-	var p2: Vector3 = keys[i + 1]
-	var p3: Vector3 = keys[mini(i + 2, keys.size() - 1)]
-	return 0.5 * ((2.0 * p1) + (-p0 + p2) * s + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * s * s + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * s * s * s)
+	camera.look_at_from_position(eye, eye + look * 10.0, Vector3.UP)

@@ -43,3 +43,6 @@ vec3 hsv_to_rgb(vec3 c) {
 	vec3 p = abs(fract(c.xxx + vec3(1.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0);
 	return c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y);
 }
+
+// The monolith's rims and outlines when lit: rgb (linear) and strength.
+global uniform vec4 monolith_edge;

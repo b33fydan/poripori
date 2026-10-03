@@ -1,19 +1,21 @@
 extends Node3D
 
 # B-roll for the first chapter: a crew of astronauts builds the message's top
-# layer (its first four rows, the numbers) on a floating island in daylight,
-# in fast motion. It's one of the film's separate incidents: it echoes the
-# chapter without explaining it, so the mystery holds.
+# layer (its first four rows, the numbers) on a floating island out in the
+# galaxy (the owner asked for open space, not a sky), in fast motion. It's
+# one of the film's separate incidents: it echoes the chapter without
+# explaining it, so the mystery holds.
 #
 # The crew works as a bucket brigade. Blocks leap from a pile to the first
 # astronaut and are tossed from hand to hand down the line, and the last one
 # throws each up into its slot in the wall, where it snaps in with a squash.
 # Every block lands on an eighth-note of the beat, bottom row first. The
-# camera glides along the line to the wall over the ten seconds while clouds
-# race overhead: a hyperlapse, with every frame still a function of song time.
+# camera glides along the line to the wall over the ten seconds while the
+# stars and the galaxy wheel overhead: a hyperlapse, with every frame still a
+# function of song time.
 #
 # The island's trees and rocks are the owner's MEGAVOX models, recoloured
-# into the daylight palette like the reference's runs; without the licensed
+# into the silver night like the reference's runs; without the licensed
 # files the island is simply bare.
 
 const AstronautScript := preload("res://scripts/astronaut.gd")
@@ -21,7 +23,7 @@ const PaletteScript := preload("res://scripts/palette.gd")
 const MegavoxScript := preload("res://scripts/megavox.gd")
 const VoxelPartScript := preload("res://scripts/voxel_part.gd")
 const InkShader := preload("res://shaders/ink.gdshader")
-const SkyShader := preload("res://shaders/print_sky.gdshader")
+const SpaceScript := preload("res://scripts/space.gd")
 const PrintShader := preload("res://shaders/print.gdshader")
 
 const BITS_PATH := "res://data/arecibo/bits.txt"
@@ -35,7 +37,8 @@ const HOP := 0.2              # seconds a block flies between two of the crew
 const HOLD := 0.04            # seconds each holds it
 const LAST_HOP := 0.38        # the throw up into the wall
 const PILE_AT := Vector3(-13.0, 0.0, 3.6)
-const PALETTE := "numbers_day"
+const PALETTE := "numbers_space"
+const SKY_TURN := 0.07        # radians a second the sky wheels round
 const TRIMS := ["#5e8ec7", "#e8735a", "#5bbf7a", "#9b7be0", "#f2cf6b", "#3fc1c9", "#e87ba4", "#5e8ec7", "#e8735a"]
 # Trees and rocks round the island's rim: [category, file, height, position].
 const PROPS := [
@@ -54,7 +57,7 @@ var camera: Camera3D
 var start := 0.0
 var end := 0.0
 var _palette: Dictionary
-var _sky_material: ShaderMaterial
+var space: Node3D
 var _crew: Array = []        # Astronaut nodes
 var _toward_prev: Array = [] # the torso turn (radians) that faces the one before
 var _toward_next: Array = []
@@ -81,7 +84,7 @@ func setup(song_timeline) -> void:
 	camera = Camera3D.new()
 	camera.fov = 48.0
 	camera.near = 0.05
-	camera.far = 2000.0
+	camera.far = 6000.0
 	add_child(camera)
 	camera.make_current()
 	_build_ink_pass()
@@ -92,21 +95,12 @@ func _tone(a: String, b: String, amount: float) -> Color:
 
 
 func _build_sky() -> void:
-	_sky_material = ShaderMaterial.new()
-	_sky_material.shader = SkyShader
-	_sky_material.set_shader_parameter("band_width", 0.7)
-	_sky_material.set_shader_parameter("band_normal", Vector3(0.1, 1.0, 0.2))
-	var sky := Sky.new()
-	sky.sky_material = _sky_material
-	var environment := Environment.new()
-	environment.background_mode = Environment.BG_SKY
-	environment.sky = sky
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_DISABLED
-	environment.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
-	environment.tonemap_mode = Environment.TONE_MAPPER_LINEAR
-	var world := WorldEnvironment.new()
-	world.environment = environment
-	add_child(world)
+	space = SpaceScript.new()
+	add_child(space)
+	# The galaxy is the set here, so its band is wider and brighter.
+	space.sky_material.set_shader_parameter("band_width", 0.34)
+	space.sky_material.set_shader_parameter("band_glow", 0.55)
+	space.sky_material.set_shader_parameter("band_cover", 0.8)
 
 
 func _build_ink_pass() -> void:
@@ -131,10 +125,10 @@ static func _hash(x: int, y: int) -> float:
 # the middle, with rock hanging beneath.
 func _build_island() -> void:
 	var island := VoxelPartScript.new(1.0, Vector3.ZERO)
-	var grass := _tone("paper", "accent", 0.3)
-	var grass_alt := _tone("paper", "accent", 0.38)
-	var dirt := _tone("accent", "ink", 0.25)
-	var rock := _tone("accent", "ink", 0.55)
+	var grass := _tone("paper", "accent", 0.62)
+	var grass_alt := _tone("paper", "accent", 0.54)
+	var dirt := _tone("paper", "accent", 0.36)
+	var rock := _tone("paper", "accent", 0.24)
 	for x in range(-22, 22):
 		for z in range(-14, 12):
 			var r := pow((x + 0.5) / 21.5, 2.0) + pow((z + 1.0) / 12.5, 2.0) + (_hash(x, z) - 0.5) * 0.12
@@ -153,8 +147,8 @@ func _build_island() -> void:
 func _recolor(c: Color) -> Color:
 	var l := c.get_luminance()
 	if l < 0.4:
-		return _tone("ink", "accent", l / 0.4)
-	return _tone("accent", "paper", (l - 0.4) / 0.6 * 0.7)
+		return _tone("paper", "accent", 0.3 + 0.5 * l / 0.4)
+	return _tone("accent", "ink", (l - 0.4) / 0.6 * 0.7)
 
 
 func _build_props() -> void:
@@ -182,7 +176,7 @@ func _plan_wall() -> void:
 	_land.resize(count)
 	for k in range(count):
 		_land[k] = start + eighth * (4.0 + round(k * 31.0 / (count - 1)))
-	_block_color = _tone("accent", "ink", 0.4)
+	_block_color = _tone("accent", "ink", 0.85)
 	var cube := BoxMesh.new()
 	cube.size = Vector3.ONE * BLOCK
 	var material := ShaderMaterial.new()
@@ -256,7 +250,7 @@ func _add_shadow(at: Vector3) -> void:
 	mesh.radial_segments = 24
 	var material := ShaderMaterial.new()
 	material.shader = PrintShader
-	var tone := _tone("paper", "accent", 0.34).lerp(_palette["shadow"] as Color, 0.35).srgb_to_linear()
+	var tone := _tone("paper", "accent", 0.4).srgb_to_linear()
 	material.set_shader_parameter("tint", Vector4(tone.r, tone.g, tone.b, 1.0))
 	mesh.material = material
 	disc.mesh = mesh
@@ -307,8 +301,6 @@ func update(t: float) -> void:
 	RenderingServer.global_shader_parameter_set("song_time", t)
 	PaletteScript.apply(_palette)
 	var since := t - start
-	# Clouds race: the hyperlapse's clock runs well ahead of the music's.
-	_sky_material.set_shader_parameter("drift", Vector3(since * 0.55, 0.0, since * 0.18))
 	_pose_crew(t)
 	for k in range(_slots.size()):
 		var at: Array = _block_at(k, t)
@@ -326,6 +318,12 @@ func update(t: float) -> void:
 		color.a = flash
 		_blocks.set_instance_color(k, color)
 	_place_camera(t)
+	# The sky wheels round: the hyperlapse's clock runs well ahead of the music's.
+	# The galaxy's band laid diagonally across the sky the camera looks at.
+	var across := Basis(Quaternion(SpaceScript.BAND_NORMAL.normalized(), Vector3(0.7, -0.7, -0.14).normalized()))
+	var turn := Basis(Vector3(0.2, 1.0, 0.35).normalized(), since * SKY_TURN) * across
+	space.sky_material.set_shader_parameter("drift", Vector3(since * 0.12, 0.0, since * 0.05))
+	space.update(t, camera.global_position, _palette["ink"], _palette["accent"], 0.0, turn)
 
 
 func _pose_crew(t: float) -> void:

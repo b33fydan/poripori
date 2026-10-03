@@ -11,6 +11,10 @@ uniform vec3 band_normal = vec3(0.35, 0.82, -0.45);
 // a hyperlapse, so clouds race while every frame stays reproducible.
 uniform vec3 drift = vec3(0.0);
 uniform float band_width = 0.22;
+// How far the band's clouds go toward the accent, and how thick they get:
+// faint at night in the film; brighter where the galaxy itself is the set.
+uniform float band_glow = 0.32;
+uniform float band_cover = 0.45;
 
 float hash13(vec3 p) {
 	p = fract(p * 0.1031);
@@ -45,7 +49,7 @@ void sky() {
 	float along = abs(dot(d, normalize(band_normal)));
 	float band = exp(-pow(along / band_width, 2.0));
 	float clouds = smoothstep(0.42, 0.78, fbm(d * 3.2 + drift));
-	float cover = clamp(band * (0.03 + 0.4 * clouds), 0.0, 0.45);
-	col = mix(col, mix(paper.rgb, accent.rgb, 0.32), halftone(FRAGCOORD.xy, cover));
+	float cover = clamp(band * (0.03 + 0.4 * clouds) * band_cover / 0.45, 0.0, band_cover);
+	col = mix(col, mix(paper.rgb, accent.rgb, band_glow), halftone(FRAGCOORD.xy, cover));
 	COLOR = col;
 }

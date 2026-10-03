@@ -11,7 +11,7 @@ extends Node3D
 # Bits and section rows come from data/arecibo/, checked against sources
 # listed in data/arecibo/SOURCES.md.
 
-const PrintShader := preload("res://shaders/print.gdshader")
+const MonolithShader := preload("res://shaders/monolith.gdshader")
 const ROWS := 73
 const COLUMNS := 23
 const BITS_PATH := "res://data/arecibo/bits.txt"
@@ -43,11 +43,12 @@ func _init(cube_pitch := 3.0) -> void:
 	var cube := BoxMesh.new()
 	cube.size = Vector3.ONE * pitch * 0.86
 	var material := ShaderMaterial.new()
-	material.shader = PrintShader
+	material.shader = MonolithShader
 	cube.material = material
 	multimesh = MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.use_colors = true
+	multimesh.use_custom_data = true
 	multimesh.mesh = cube
 	multimesh.instance_count = _cubes.size()
 	var instance := MultiMeshInstance3D.new()
@@ -82,6 +83,8 @@ func height() -> float:
 # and prints flat and bright for a moment as it lights. Before that cubes
 # hang as `unlit`, a shade of the night. Lit cubes are toned a touch toward
 # `paper` so white rows don't blow out. `pulse` swells the cubes on the beat.
+# Lit cubes wear rims of light in the global monolith_edge colour (set by the
+# shot), all changing together.
 func update(t: float, row_lit: PackedFloat64Array, pulse: float, unlit: Color, paper: Color) -> void:
 	for i in range(_cubes.size()):
 		var cube: Array = _cubes[i]
@@ -96,3 +99,4 @@ func update(t: float, row_lit: PackedFloat64Array, pulse: float, unlit: Color, p
 		var color := unlit.lerp(base.lerp(paper, 0.24), on).srgb_to_linear()
 		color.a = 1.0 if flash > 0.35 else 0.0
 		multimesh.set_instance_color(i, color)
+		multimesh.set_instance_custom_data(i, Color(on, 0.0, 0.0, 0.0))

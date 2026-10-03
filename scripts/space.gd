@@ -13,6 +13,7 @@ const FAR_RADIUS := 2400.0
 const DUST := 330          # 300, plus 10% more at half size for depth
 const SMALL_DUST_FROM := 300
 const DUST_BOX := Vector3(70.0, 50.0, 90.0)
+const BAND_NORMAL := Vector3(0.35, 0.82, -0.45)  # the galaxy band's, as print_sky.gdshader has it
 
 var environment: Environment
 var sky_material: ShaderMaterial
@@ -92,9 +93,12 @@ func _build_dust() -> void:
 	add_child(instance)
 
 
-# ink and accent: the current palette's. pulse: 0..1 on the beat.
-func update(t: float, camera_position: Vector3, ink: Color, accent: Color, pulse: float) -> void:
+# ink and accent: the current palette's. pulse: 0..1 on the beat. `turn`
+# wheels the whole sky (stars and galaxy band) round, for a hyperlapse.
+func update(t: float, camera_position: Vector3, ink: Color, accent: Color, pulse: float, turn := Basis.IDENTITY) -> void:
 	_stars_node.position = camera_position
+	_stars_node.basis = turn
+	sky_material.set_shader_parameter("band_normal", turn * BAND_NORMAL)
 	for i in range(FAR_STARS):
 		var star: Array = _star_data[i]
 		var twinkle := 0.8 + 0.2 * sin(t * float(star[2]) + float(star[3]))
