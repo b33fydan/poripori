@@ -56,20 +56,28 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
     - Nine astronauts, each with their own trim colour, build the message's top four rows on a floating MEGAVOX island in blueprint-blue daylight.
     - They work as a bucket brigade, and every block lands on an eighth-note.
 - **The edit:** `edits/opening.json` lists the cuts in bars, and `tools/render_edit.py` renders them into one video.
-- **1:04, the reach:** the song turns mellow (bar 32, 63.53 s).
-  - The astronaut floats upward in space, in slow motion, with a massive Earth behind (`scripts/voxel_earth.gd`, coastlines from Natural Earth). Side and top views.
-  - As the build ends, a slow reveal shows the astronaut reaching up, and the mascot extending its little arm.
-  - An FPV drone dive down beside the monolith is intercut.
-  - The detailed shot list is pending the owner's approval.
-- **1:36, the touch:** the drop (bar 48, 95.27 s). The astronaut and the mascot touch hands as the beat kicks back in. From then on the mascot rides at the board's tip, pointing forward.
+- **1:04, the reach (built 2026-10-03, `scripts/shots/reach.gd`, cuts in `edits/film.json`):**
+  - **Bars 32–36:** side view, in slow motion. He floats up off the board, which drifts away below, with Earth's face behind (`scripts/voxel_earth.gd`, coastlines from Natural Earth, the Caribbean turned to the camera).
+  - **Bars 36–38:** FPV dive 1, from above the top rows plunging down the face and through the ring's hole.
+  - **Bars 38–42:** top view, looking down on him over Earth.
+  - **Bars 42–44:** FPV dive 2, down through the DNA rows to the still-dark human figure.
+  - **Bars 44–47:** the reveal. From below, his glove rises on the diagonal; straight up, it would hide beside the big helmet.
+  - **Bars 47–48.5:** the touch. The mascot comes down from the upper right and slides its arm out, and the gap closes exactly on the drop's first kick in a burst of stars.
+  - **The board:** he leaves it to float and lands back on it at the drop (owner's call).
+- **1:36, the touch:** the drop (bar 48, 95.27 s). The astronaut and the mascot touch hands as the beat kicks back in.
+  - **Where the ring is:** while the reach plays, the ring descends to the human figure's feet (row 54.6). The rider is moved round the ring unseen, so the drop meets the monolith's front.
+  - **From bar 48.5:** back on the ring in the human chapter's red, with the lit human figure towering, and the mascot flying beside him leaving little stars.
 - **The voice (from the touch onward):** "Gervis", the owner's voice character, speaks in the background like a PA or a radio transmission. The owner will write the inspiring words. Only then does text appear on screen: the spoken words, as captions.
 
 ## The mascot
 
-- **Who:** the orange pixel character from Claude Code, rebuilt in voxels (`scripts/mascot.gd`).
-  - It follows the terminal art exactly: a 12×4 body with two eye notches, a two-pixel arm each side and four one-pixel legs.
-  - Each pixel is a 0.09-unit cube, and the body is 4 cubes deep.
-  - Its arms telescope out, for the touch.
+- **Who:** the orange character from Claude Code, rebuilt in voxels (`scripts/mascot.gd`).
+- **Shape:** after a 3D figure the owner chose (2026-10-03):
+  - a near-cube body (12 × 9 × 9 voxels of 0.07 units), about a third wider than tall;
+  - raised black square eyes set wide in its top quarter;
+  - a flat block of an arm at mid-height on each side;
+  - two pairs of slim legs, a third of the body's height.
+- **Size and arms:** it's about half the astronaut's height, and its arms telescope out for the touch.
 - **After the touch:** the mascot flies beside the astronaut, leaving little stars, rather than riding the board. Sitting on a shoulder would look odd with the blocky shapes (the owner's call).
 - **No branding:** no Anthropic logo or name anywhere in the film, so it never reads as official.
 

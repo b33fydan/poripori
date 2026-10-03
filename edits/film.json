@@ -1,0 +1,20 @@
+{
+ "about": "The film so far: song 0:00 to 1:47 (bar 54). Each cut runs until the next; cuts are placed on bars so they land on the beat (a cut shows on the first frame at or after its bar). Options other than 'shot' pass to the shot.",
+ "song": "lost-in-the-void",
+ "start": 0.0,
+ "end": 107.2,
+ "cuts": [
+  {"at": 0.0, "shot": "opening"},
+  {"at_bar": 11, "shot": "broll_numbers"},
+  {"at_bar": 16, "shot": "opening"},
+  {"at_bar": 24, "shot": "opening", "camera": "follow"},
+  {"at_bar": 26.5, "shot": "opening"},
+  {"at_bar": 32, "shot": "reach", "view": "side"},
+  {"at_bar": 36, "shot": "opening", "camera": "fpv1"},
+  {"at_bar": 38, "shot": "reach", "view": "top"},
+  {"at_bar": 42, "shot": "opening", "camera": "fpv2"},
+  {"at_bar": 44, "shot": "reach", "view": "reveal"},
+  {"at_bar": 47, "shot": "reach", "view": "touch"},
+  {"at_bar": 48.5, "shot": "opening"}
+ ]
+}

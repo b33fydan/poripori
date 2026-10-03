@@ -15,8 +15,8 @@ const OCEAN := Color("#2c63a8")
 const OCEAN_DEEP := Color("#25579a")
 const LAND := Color("#4f9b4c")
 const LAND_DARK := Color("#3f8545")
-const ICE := Color("#e6edf5")
-const CLOUD := Color("#f2f5fa")
+const ICE := Color("#d3dae5")      # soft, not pure white: big white areas blew out
+const CLOUD := Color("#cfd6e2")
 
 var radius_cells := 56
 var cell := 8.0

@@ -2,6 +2,49 @@
 
 Newest entry first. Each entry covers one working slice: what was decided, how it was checked, and the exact next step.
 
+## 2026-10-03 — The reach and the touch (song 1:03–1:47)
+
+**Owner direction**
+- He leaves the board to float and lands back on it at the drop.
+- The mascot should be less wide and a bit taller, after a reference photo of a 3D-printed figure.
+- The shot list was proposed as approved, with the FPV dive.
+
+**What changed**
+- **The mascot (`scripts/mascot.gd`)** was rebuilt after the reference:
+  - a body of 12 × 9 × 9 voxels (P = 0.07);
+  - raised black plate eyes;
+  - flat arm blocks (3 × 3) that telescope to 8 slices;
+  - four slim legs in two pairs, 3 voxels tall.
+- **`scripts/star_trail.gd`:** three-armed star crosses, born behind the mascot, plus `burst()` for the touch. Time-indexed like the spray.
+- **`scripts/shots/reach.gd`** is now the timed sequence: side, top, reveal, touch.
+  - His rise is continuous from bar 32. The board drifts away in the side view.
+  - Earth is placed per view behind him (`_earth_behind`) with Arecibo toward the camera.
+  - The touch closes the gap along a line, with the arm sliding out on an ease that slows to nothing at the drop. The star burst comes on the drop.
+- **`scripts/shots/opening.gd`:**
+  - **The descent:** now monotone (Fritsch–Carlson), so it never overshoots a key. New keys take it to row 34 at bar 40, 54.6 at bar 48 and 55.6 at bar 56. This replaces Catmull-Rom; the earlier keys are unchanged, but the curve between them differs very slightly, and the first minute was re-rendered with it.
+  - **The rider is moved round the ring at bar 40, unseen** (`_angle_jump`), so the camera meets the monolith's front 6.4 s after the drop.
+  - **The FPV dives:** `camera=fpv1` and `fpv2` follow paths in the monolith's frame, with FOV 100° and banking roll. They hide the rider.
+  - **The drop:** the rider lands back on the board, with a camera punch, and the mascot flies beside him from then on with its stars.
+- **`edits/film.json`** is the master edit, song 0:00–1:47.18 (bar 54).
+
+**How it was checked**
+- **Stills of every new shot,** with fixes:
+  - the reveal was too small and missed Earth;
+  - the touch was cramped, with the glove hidden beside the helmet, fixed by a diagonal reach and a medium shot;
+  - Earth's limb at his boots looked as if he stood on it, so Earth was moved lower;
+  - the mascot after the drop was moved closer, and the stars made bigger.
+- **Render:** `renders/film.mp4`, 3,216 frames, 1080p, motion blur 4 × 0.5, 19 min for a full render. `tools/check_cuts.py` passes: all 11 cuts on their planned frames, and no others.
+  - The first render showed a false "cut" one frame into FPV dive 2. Its derivatives were sampled with the path clamped at u = 0, which gave a huge bogus bank for 3 frames.
+  - Fixed by extrapolating the path. Only cuts 6 and 8 were re-rendered (`--only 6,8`, 2.4 min).
+- **The touch:** frame by frame, the glove and arm meet and the star burst starts on frame 2859, right after the drop's frame 2858 (95.266 s). Stills and film frames match at 94.4 s and 95.0 s.
+- **Exposure:** Earth's white clouds and ice peaked at 8% of pixels above 0.85 luma. They were toned to soft grey-whites and only the 4 Earth cuts were re-rendered. The night shots now peak at 3.4% (the star burst) with a mean of 0.5%.
+
+**Next step**
+- The owner reviews 0:00–1:47.
+- Then the drop section onward (bars 48–64), the break at 2:07 (the telescope chapter? the 2020 collapse?), and the B-roll incidents for the other chapters.
+
+---
+
 ## 2026-10-03 — Motion blur, the mascot and Earth (look development for the reach)
 
 **Owner direction**

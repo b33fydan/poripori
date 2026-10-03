@@ -22,7 +22,15 @@ extends Node3D
 # edge-on or from behind.
 #
 # options: camera=follow swaps the wide chase for a close one right behind
-# the board.
+# the board; camera=fpv1 and camera=fpv2 are the FPV drone dives down the
+# monolith's face during the reach (the rider is away floating, so it and
+# its board are hidden).
+#
+# The drop (bar 48) lands the astronaut back on the board at the human
+# figure, with the mascot flying beside it from then on, leaving little
+# stars. While the reach plays elsewhere, the ring descends to the human
+# figure, and the rider is moved round the ring (bar 40, unseen) so the
+# camera meets the monolith's front just after the drop.
 
 const AstronautScript := preload("res://scripts/astronaut.gd")
 const SprayScript := preload("res://scripts/spray.gd")
@@ -31,6 +39,8 @@ const SculptureScript := preload("res://scripts/message_sculpture.gd")
 const RingScript := preload("res://scripts/saturn_ring.gd")
 const PaletteScript := preload("res://scripts/palette.gd")
 const InkShader := preload("res://shaders/ink.gdshader")
+const MascotScript := preload("res://scripts/mascot.gd")
+const StarTrailScript := preload("res://scripts/star_trail.gd")
 
 const PITCH := 8.0           # a bit is a cube ~6.9 units across: four riders tall
 const ROWS := 73
@@ -48,8 +58,11 @@ const RIDE_HEIGHT := 0.12
 const FOV := 56.0
 # The descent: [bar, the message row level with the ring]. Chapter edges
 # (row 4.5 between numbers and elements, 10.5 before the formulas) fall on
-# phrase downbeats: bar 16 and bar 24.
-const DESCENT := [[0.0, 1.0], [8.0, 2.6], [16.0, 4.5], [24.0, 10.5], [32.0, 18.0]]
+# phrase downbeats: bar 16 and bar 24. Through the reach it drops fast to the
+# human figure's feet (row 54.6) for the drop at bar 48, then all but stops.
+const DESCENT := [[0.0, 1.0], [8.0, 2.6], [16.0, 4.5], [24.0, 10.5], [32.0, 18.0], [40.0, 34.0], [48.0, 54.6], [56.0, 55.6]]
+const JUMP_BAR := 40.0       # the rider is moved round the ring here, unseen
+const FRONT_AFTER_DROP := 6.4  # seconds after the drop the camera meets the front
 const FRONT_AT := 38.0       # song time when the monolith faces the camera
 # The board rides like a surfboard on water: nose up, rolled onto its
 # toe-side rail, pivoting on that rail at the tail.
@@ -65,14 +78,21 @@ var space: Node3D
 var sculpture: Node3D
 var ring: Node3D
 var kick := 0.0
+var drop := 0.0
 var bar_length := 2.0
+var mascot: Node3D
+var stars: Node3D
 var _row_lit := PackedFloat64Array()
+var _angle_jump := 0.0
+var _descent_slopes := PackedFloat64Array()
 
 
 func setup(song_timeline) -> void:
 	timeline = song_timeline
 	kick = timeline.section_start("groove_a")
+	drop = timeline.section_start("drop")
 	bar_length = timeline.period * timeline.beats_per_bar
+	_descent_slopes = _monotone_slopes()
 	space = SpaceScript.new()
 	add_child(space)
 	sculpture = SculptureScript.new(PITCH)
@@ -83,6 +103,10 @@ func setup(song_timeline) -> void:
 	add_child(astronaut)
 	spray = SprayScript.new(rig_transform, spray_amount, ink_now, ring_height, astronaut.tail_point, Vector3.UP)
 	add_child(spray)
+	mascot = MascotScript.new()
+	add_child(mascot)
+	stars = StarTrailScript.new(_star_source, _star_amount)
+	add_child(stars)
 	camera = Camera3D.new()
 	camera.fov = FOV
 	camera.near = 0.05
@@ -90,12 +114,16 @@ func setup(song_timeline) -> void:
 	add_child(camera)
 	camera.make_current()
 	_build_ink_pass()
-	ring.paint(track, 0.0, float(options.get("to", "40")), 1.7)
-	_row_lit = _row_light_times(float(options.get("to", "40")) + 30.0)
 	# Static: front toward where the camera rides at FRONT_AT (just outside
 	# the rider's line).
 	var front := track(FRONT_AT).y
 	sculpture.rotation = Vector3(0.0, atan2(cos(front), sin(front)), 0.0)
+	# After the jump the camera (trailing the rider) meets that front again
+	# FRONT_AFTER_DROP seconds after the drop.
+	var meet := drop + FRONT_AFTER_DROP
+	_angle_jump = wrapf(front + 2.4 / TRACK_RADIUS - track(meet).y, -PI, PI)
+	ring.paint(track, 0.0, float(options.get("to", "40")), 1.7)
+	_row_lit = _row_light_times(float(options.get("to", "40")) + 30.0)
 
 
 func _build_ink_pass() -> void:
@@ -114,26 +142,55 @@ func _build_ink_pass() -> void:
 
 # --- The descent ------------------------------------------------------------------
 
-# The row level with the ring at song time t: a Catmull-Rom curve through
-# DESCENT's keys, so the lift never stops dead at a key.
+# The row level with the ring at song time t: a monotone cubic through
+# DESCENT's keys (Fritsch-Carlson), so the lift never stops dead at a key
+# and never overshoots one, even where it slows sharply (the drop).
 func ring_row(t: float) -> float:
 	var bar: float = timeline.bar(t)
 	var keys := DESCENT
+	var n := keys.size()
 	if bar <= float(keys[0][0]):
 		return float(keys[0][1])
-	if bar >= float(keys[keys.size() - 1][0]):
-		var a: Array = keys[keys.size() - 2]
-		var b: Array = keys[keys.size() - 1]
-		return float(b[1]) + (bar - float(b[0])) * (float(b[1]) - float(a[1])) / (float(b[0]) - float(a[0]))
+	if bar >= float(keys[n - 1][0]):
+		return float(keys[n - 1][1]) + (bar - float(keys[n - 1][0])) * _descent_slopes[n - 1]
 	var i := 0
 	while float(keys[i + 1][0]) < bar:
 		i += 1
-	var p0: float = float(keys[maxi(i - 1, 0)][1])
-	var p1: float = float(keys[i][1])
-	var p2: float = float(keys[i + 1][1])
-	var p3: float = float(keys[mini(i + 2, keys.size() - 1)][1])
-	var u := (bar - float(keys[i][0])) / (float(keys[i + 1][0]) - float(keys[i][0]))
-	return 0.5 * ((2.0 * p1) + (-p0 + p2) * u + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * u * u + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * u * u * u)
+	var x0: float = keys[i][0]
+	var x1: float = keys[i + 1][0]
+	var y0: float = keys[i][1]
+	var y1: float = keys[i + 1][1]
+	var h := x1 - x0
+	var u := (bar - x0) / h
+	var u2 := u * u
+	var u3 := u2 * u
+	return (2.0 * u3 - 3.0 * u2 + 1.0) * y0 + (u3 - 2.0 * u2 + u) * h * _descent_slopes[i] + (-2.0 * u3 + 3.0 * u2) * y1 + (u3 - u2) * h * _descent_slopes[i + 1]
+
+
+func _monotone_slopes() -> PackedFloat64Array:
+	var keys := DESCENT
+	var n := keys.size()
+	var d := PackedFloat64Array()
+	for k in range(n - 1):
+		d.append((float(keys[k + 1][1]) - float(keys[k][1])) / (float(keys[k + 1][0]) - float(keys[k][0])))
+	var m := PackedFloat64Array()
+	m.resize(n)
+	m[0] = d[0]
+	m[n - 1] = d[n - 2]
+	for k in range(1, n - 1):
+		m[k] = 0.0 if d[k - 1] * d[k] <= 0.0 else (d[k - 1] + d[k]) * 0.5
+	for k in range(n - 1):
+		if d[k] == 0.0:
+			m[k] = 0.0
+			m[k + 1] = 0.0
+			continue
+		var a := m[k] / d[k]
+		var b := m[k + 1] / d[k]
+		if a * a + b * b > 9.0:
+			var tau := 3.0 / sqrt(a * a + b * b)
+			m[k] = tau * a * d[k]
+			m[k + 1] = tau * b * d[k]
+	return m
 
 
 func row_height(row: float) -> float:
@@ -180,11 +237,13 @@ func _surf(t: float) -> float:
 	return smoothstep(kick - 0.2, kick + 1.4, t)
 
 
-# The board's place in the ring as (radius, angle).
+# The board's place in the ring as (radius, angle). At JUMP_BAR, while the
+# reach plays elsewhere, it is moved round the ring by _angle_jump.
 func track(t: float) -> Vector2:
 	var distance := GLIDE * t + (SURF - GLIDE) * _ramp_integral(t, kick - 0.2, kick + 1.4)
 	var radius := TRACK_RADIUS + lerpf(0.35, 1.0, _surf(t)) * CARVE * sin(TAU * timeline.bar(t) / 4.0)
-	return Vector2(radius, distance / TRACK_RADIUS)
+	var jump := _angle_jump if timeline.bar(t) >= JUMP_BAR else 0.0
+	return Vector2(radius, distance / TRACK_RADIUS + jump)
 
 
 func swell_amplitude(t: float) -> float:
@@ -266,15 +325,28 @@ func update(t: float) -> void:
 	var ink: Color = palette["ink"]
 	var pulse: float = timeline.beat_pulse(t, 0.3) if t >= kick else 0.0
 	sculpture.update(t, _row_lit, pulse, paper.lerp(ink, 0.2), paper)
-	if str(options.get("camera", "")) == "follow":
+	var mode := str(options.get("camera", ""))
+	var diving := mode.begins_with("fpv")
+	astronaut.visible = not diving
+	spray.visible = not diving
+	mascot.visible = not diving and t >= drop
+	stars.visible = mascot.visible
+	if mascot.visible:
+		mascot.transform = _mascot_transform(t)
+		mascot.hover(TAU * timeline.beat(t) * 0.5)
+		stars.update(t)
+	if mode == "follow":
 		_place_follow_camera(t, rig)
+	elif diving:
+		_place_fpv_camera(t, 1 if mode == "fpv1" else 2)
 	else:
 		_place_camera(t, rig)
 	space.update(t, camera.global_position, ink, palette["accent"], timeline.beat_pulse(t, 0.2) if t >= kick else 0.0)
 
 
 func _pose_rider(t: float) -> void:
-	var before := t - kick
+	# The kick springs the rider; the drop lands it back on the board.
+	var before := t - (drop if t >= drop else kick)
 	var glide_arms := Vector4(0.55, 0.15, -0.45, 0.15)
 	var surf_arms := Vector4(1.2, 0.35, -0.95, 0.4)
 	var crouch := 0.3 + 0.06 * sin(TAU * timeline.bar(t) / 2.0)
@@ -340,7 +412,7 @@ func _place_camera(t: float, rig: Transform3D) -> void:
 	var target := at_rider.lerp(framed, smoothstep(kick - 2.0, kick + 0.2, t))
 	# The kick's punch rises over three frames rather than jumping in one
 	# (a one-frame jump reads as a cut), then eases away.
-	var punch := _hit(after, 0.1, 1.0) if after >= 0.0 else 0.0
+	var punch := (_hit(after, 0.1, 1.0) if after >= 0.0 else 0.0) + _hit(t - drop, 0.1, 1.0)
 	var shake := Vector3(sin(t * 61.0), sin(t * 47.0 + 1.3), 0.0) * 0.04 * punch
 	camera.fov = FOV + 5.0 * punch
 	camera.look_at_from_position(eye + shake, target, Vector3.UP)
@@ -367,3 +439,87 @@ func _place_follow_camera(t: float, rig: Transform3D) -> void:
 	camera.fov = 60.0
 	var bank := rig.basis.y.dot(-outward) * 0.35
 	camera.look_at_from_position(eye, target, (Vector3.UP + outward * bank).normalized())
+
+
+# --- The mascot, after the drop -----------------------------------------------------
+
+# Beside the rider, a little ahead and above, on the camera's side, turned
+# three-quarters toward the camera so its face shows; it bobs with the beat.
+func _mascot_frame(t: float) -> Array:
+	var at := track(t)
+	var forward := Vector3(-sin(at.y), 0.0, cos(at.y))
+	var outward := Vector3(cos(at.y), 0.0, sin(at.y))
+	var origin := board_position(t)
+	var bob: float = 0.08 * sin(TAU * timeline.beat(t) * 0.5)
+	return [origin + forward * 0.55 + outward * 0.6 + Vector3.UP * (1.3 + bob), forward, outward]
+
+
+func _mascot_transform(t: float) -> Transform3D:
+	var frame := _mascot_frame(t)
+	var facing: Vector3 = ((frame[1] as Vector3) * 0.6 + (frame[2] as Vector3) * 0.8).normalized()
+	var basis := Basis.looking_at(-facing, Vector3.UP)
+	# A little bank toward the way it's flying.
+	basis = Basis((frame[1] as Vector3), 0.12 * sin(TAU * timeline.bar(t) / 4.0)) * basis
+	return Transform3D(basis, frame[0])
+
+
+func _star_source(t: float) -> Vector3:
+	var frame := _mascot_frame(t)
+	return (frame[0] as Vector3) - (frame[1] as Vector3) * 0.45 + Vector3.UP * 0.3
+
+
+func _star_amount(t: float) -> float:
+	return 1.0 if t >= drop else 0.0
+
+
+# --- The FPV dives ----------------------------------------------------------------------
+
+# An FPV drone diving down the monolith's face: fast, wide, banking into its
+# turns. The path is in the monolith's own frame (x along its rows toward
+# the viewer's right, y up, z out of its face), so it follows the face
+# however the monolith stands. Both pass down through the ring's hole.
+# 1 (bars 36-38): from above the top rows, plunging down the face, speeding up.
+# 2 (bars 42-44): faster and closer, down past the rows to the human figure,
+#    slowing at the end to look at it (dark: the ring hasn't reached it yet).
+func _place_fpv_camera(t: float, dive: int) -> void:
+	var a: float = timeline.bar_time(36.0 if dive == 1 else 42.0)
+	var b: float = timeline.bar_time(38.0 if dive == 1 else 44.0)
+	var keys: Array
+	if dive == 1:
+		keys = [Vector3(-70.0, 330.0, 95.0), Vector3(-25.0, 250.0, 50.0), Vector3(18.0, 160.0, 28.0), Vector3(-8.0, 80.0, 20.0), Vector3(4.0, 10.0, 26.0)]
+	else:
+		keys = [Vector3(45.0, 85.0, 60.0), Vector3(-5.0, 20.0, 34.0), Vector3(-22.0, -55.0, 22.0), Vector3(-16.0, -100.0, 30.0)]
+	var u := clampf((t - a) / (b - a), 0.0, 1.0)
+	u = pow(u, 1.5) if dive == 1 else 1.0 - pow(1.0 - u, 1.6)
+	# Derivatives sample past the path's ends, where the curve extends
+	# smoothly; clamping there gave the first frames a false, huge bank.
+	var p := _fpv_point(keys, u)
+	var ahead := _fpv_point(keys, u + 0.02)
+	var behind := _fpv_point(keys, u - 0.02)
+	var face: Vector3 = sculpture.basis.z.normalized()
+	var right: Vector3 = sculpture.basis.x.normalized()
+	var to_world := func(q: Vector3) -> Vector3: return sculpture.position + right * q.x + Vector3.UP * q.y + face * q.z
+	var eye: Vector3 = to_world.call(p)
+	var velocity: Vector3 = to_world.call(ahead) - to_world.call(behind)
+	var look := (velocity.normalized() - face * 0.55).normalized()
+	if dive == 2:
+		# Pull up to look at the human figure as the dive ends.
+		var human: Vector3 = to_world.call(Vector3(-16.0, -112.0, 0.0))
+		look = look.lerp((human - eye).normalized(), smoothstep(0.7, 1.0, u)).normalized()
+	var bend: Vector3 = to_world.call(ahead) - 2.0 * eye + to_world.call(behind)
+	var side := look.cross(Vector3.UP).normalized()
+	var roll := clampf(-bend.dot(side) * 0.6, -0.55, 0.55) * (1.0 - smoothstep(0.85, 1.0, u) * float(dive == 2))
+	var up := Vector3.UP.rotated(look, roll)
+	camera.fov = 100.0
+	camera.look_at_from_position(eye, eye + look * 10.0, up)
+
+
+func _fpv_point(keys: Array, u: float) -> Vector3:
+	var f := u * (keys.size() - 1)
+	var i := clampi(int(floor(f)), 0, keys.size() - 2)
+	var s := f - i
+	var p0: Vector3 = keys[maxi(i - 1, 0)]
+	var p1: Vector3 = keys[i]
+	var p2: Vector3 = keys[i + 1]
+	var p3: Vector3 = keys[mini(i + 2, keys.size() - 1)]
+	return 0.5 * ((2.0 * p1) + (-p0 + p2) * s + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * s * s + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * s * s * s)
