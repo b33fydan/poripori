@@ -25,6 +25,8 @@ const PALETTES := {
 	# The B-roll's daylight: light paper, a navy ink for outlines and a deep
 	# shadow tone. The numbers are white, so their day is a blueprint blue.
 	"numbers_day": {"paper": "#eef1fa", "ink": "#1b2257", "accent": "#5a73d6", "shadow": "#22307a"},
+	# Home: the deep navy night round Earth, for the reach and the touch.
+	"home": {"paper": "#060a22", "ink": "#c4d3fa", "accent": "#4f8fe6"},
 }
 
 # The first row of each chapter's band of the message, top to bottom (rows

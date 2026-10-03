@@ -8,7 +8,7 @@ extends SceneTree
 #
 #   Godot --path . --resolution 1280x720 --script res://scripts/film.gd -- \
 #     shot=opening song=lost-in-the-void from=0 to=40 frames=<dir> \
-#     [start=0] [size=1280x720] [dither=1] [beats] [any shot option=value]
+#     [start=0] [size=1280x720] [dither=1] [blur=6 shutter=0.5] [beats] [any shot option=value]
 #
 # The shot renders into an offscreen viewport of `size` (default 1920x1080),
 # and each frame is saved the moment it has been drawn. The window only
@@ -16,7 +16,12 @@ extends SceneTree
 # itself, and a 1080p window gets maximized and misframed on this Mac's
 # 1920x1080 screen. Halftone dots and ink lines scale with `size`.
 #
-# The film uses flat, solid tones; `dither=1` brings back the halftone dots. `beats` draws a
+# The film uses flat, solid tones; `dither=1` brings back the halftone dots.
+#
+# `blur=N` renders N moments spread across a `shutter` (a fraction of the
+# frame: 0.5 is a film camera's 180 degrees) centred on each frame's song
+# time, saved as sub%08d.png (frame n's are n*N to n*N+N-1); the render tools
+# average each group into the frame, which is motion blur. `beats` draws a
 # flash on every beat (red on the bar's first) for checking sync.
 # `stills=7.5,16,22 out=<dir>` saves PNG stills at those song times instead.
 
@@ -33,6 +38,9 @@ var _from := 0.0
 var _to := 0.0
 var _end_index := 0
 var _frame := 0
+var _blur := 1
+var _shutter := 0.5
+var _sub := 0
 var _warm := 0
 var _pending := ""  # where the frame being drawn should be saved
 var _stills: Array = []
@@ -48,6 +56,8 @@ func _initialize() -> void:
 		var wh := str(args["size"]).split("x")
 		_size = Vector2i(int(wh[0]), int(wh[1]))
 	RenderingServer.global_shader_parameter_set("print_scale", _size.y / 720.0)
+	_blur = maxi(1, int(args.get("blur", "1")))
+	_shutter = float(args.get("shutter", "0.5"))
 	RenderingServer.global_shader_parameter_set("dither", 1.0 if str(args.get("dither", "0")) == "1" else 0.0)
 	_timeline = SongTimelineScript.load_song(str(args.get("song", "lost-in-the-void")))
 	if _timeline == null:
@@ -135,9 +145,15 @@ func _on_frame() -> void:
 	if _frame >= _end_index:
 		quit()
 		return
-	_pose(_start + _frame / FPS)
+	var t := _start + _frame / FPS
+	if _blur > 1:
+		t += ((_sub + 0.5) / _blur - 0.5) * _shutter / FPS
+	_pose(t)
 	if _warm >= WARM_UP:
-		_pending = "%s/frame%06d.png" % [_frames_dir, _frame]
+		if _blur > 1:
+			_pending = "%s/sub%08d.png" % [_frames_dir, _frame * _blur + _sub]
+		else:
+			_pending = "%s/frame%06d.png" % [_frames_dir, _frame]
 	_warm += 1
 
 
@@ -149,7 +165,13 @@ func _on_drawn() -> void:
 		print("[Film] saved %s" % _pending)
 		_warm = 0
 	_pending = ""
-	_frame += 1
+	if not _stills.is_empty() or _blur <= 1:
+		_frame += 1
+		return
+	_sub += 1
+	if _sub >= _blur:
+		_sub = 0
+		_frame += 1
 
 
 func _pose(t: float) -> void:

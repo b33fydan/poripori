@@ -53,7 +53,7 @@ const DESCENT := [[0.0, 1.0], [8.0, 2.6], [16.0, 4.5], [24.0, 10.5], [32.0, 18.0
 const FRONT_AT := 38.0       # song time when the monolith faces the camera
 # The board rides like a surfboard on water: nose up, rolled onto its
 # toe-side rail, pivoting on that rail at the tail.
-const NOSE_UP := 6.0
+const NOSE_UP := 14.0        # clearly nose-up, the owner asked
 const RAIL := 11.0
 
 var options := {}
@@ -229,7 +229,7 @@ func rig_transform(t: float) -> Transform3D:
 	# Nose up and onto the rail, more of both once surfing; the tail's
 	# inside rail stays where it was, on the water.
 	var surf := _surf(t)
-	var tilt := Basis(Vector3.BACK, deg_to_rad(NOSE_UP * lerpf(0.6, 1.0, surf))) * Basis(Vector3.RIGHT, deg_to_rad(RAIL * lerpf(0.5, 1.0, surf)))
+	var tilt := Basis(Vector3.BACK, deg_to_rad(NOSE_UP * lerpf(0.75, 1.0, surf))) * Basis(Vector3.RIGHT, deg_to_rad(RAIL * lerpf(0.5, 1.0, surf)))
 	var pivot: Vector3 = astronaut.rail_pivot
 	return xf * Transform3D(tilt, pivot - tilt * pivot)
 

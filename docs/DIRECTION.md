@@ -56,13 +56,21 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
     - Nine astronauts, each with their own trim colour, build the message's top four rows on a floating MEGAVOX island in blueprint-blue daylight.
     - They work as a bucket brigade, and every block lands on an eighth-note.
 - **The edit:** `edits/opening.json` lists the cuts in bars, and `tools/render_edit.py` renders them into one video.
-- **1:04, the reach:** the song turns mellow (bar 32, 63.53 s). In slow motion the astronaut reaches up with one hand, and the Claude mascot is revealed bit by bit. Short B-roll cuts fly the camera low over the human figure in the middle of the message as the build-up rises.
+- **1:04, the reach:** the song turns mellow (bar 32, 63.53 s).
+  - The astronaut floats upward in space, in slow motion, with a massive Earth behind (`scripts/voxel_earth.gd`, coastlines from Natural Earth). Side and top views.
+  - As the build ends, a slow reveal shows the astronaut reaching up, and the mascot extending its little arm.
+  - An FPV drone dive down beside the monolith is intercut.
+  - The detailed shot list is pending the owner's approval.
 - **1:36, the touch:** the drop (bar 48, 95.27 s). The astronaut and the mascot touch hands as the beat kicks back in. From then on the mascot rides at the board's tip, pointing forward.
 - **The voice (from the touch onward):** "Gervis", the owner's voice character, speaks in the background like a PA or a radio transmission. The owner will write the inspiring words. Only then does text appear on screen: the spoken words, as captions.
 
 ## The mascot
 
-- **Who:** the orange pixel character from Claude Code, rebuilt in voxels.
+- **Who:** the orange pixel character from Claude Code, rebuilt in voxels (`scripts/mascot.gd`).
+  - It follows the terminal art exactly: a 12×4 body with two eye notches, a two-pixel arm each side and four one-pixel legs.
+  - Each pixel is a 0.09-unit cube, and the body is 4 cubes deep.
+  - Its arms telescope out, for the touch.
+- **After the touch:** the mascot flies beside the astronaut, leaving little stars, rather than riding the board. Sitting on a shoulder would look odd with the blocky shapes (the owner's call).
 - **No branding:** no Anthropic logo or name anywhere in the film, so it never reads as official.
 
 ## Credits

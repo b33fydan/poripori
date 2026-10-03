@@ -2,6 +2,40 @@
 
 Newest entry first. Each entry covers one working slice: what was decided, how it was checked, and the exact next step.
 
+## 2026-10-03 — Motion blur, the mascot and Earth (look development for the reach)
+
+**Owner direction**
+- Can I add a bit of motion blur?
+- Plan for 1:03 onward:
+  - the astronaut floats upward in space with a massive Earth behind, in side and top views, in slow motion;
+  - as the climax ends, a slow reveal of the reach, then the mascot's little arm extends and their hands touch;
+  - then the mascot flies beside him leaving little stars.
+- The board's nose should point up.
+- Can parts be re-rendered surgically? Answered: yes, cut by cut.
+- Add an FPV drone dive down beside the monolith.
+
+**What changed**
+- **Motion blur:** `film.gd blur=N shutter=S` renders N moments spread across the shutter, centred on each frame's time. `tools/render_edit.py --blur N` averages each cut's moments with ffmpeg `tmix` and `select`, so only finished frames are kept.
+  - The test (`renders/blur-compare.mp4`, song 46–53 s, sharp left, blur 6 × 0.5 right) took about 5× the render time.
+  - Each blurred frame matches its own sharp frame best (difference 4–5 against 15–17 for neighbours), so the blur is centred.
+  - Cuts are still on their frames.
+- **Surgical re-renders:** `render_edit.py` keeps `renders/<name>.frames/`, and `--only 2,4` re-renders just those cuts and re-encodes.
+- **The board's nose** is now up 14° (75% of that while gliding).
+- **The mascot (`scripts/mascot.gd`):** pixel-exact from Claude Code's terminal art, no logo or name. `reach()` telescopes an arm out and angles it, `arm_tip()` gives its tip, and `hover()` bobs it. `tools/godot/mascot_sheet.gd` renders model sheets (`renders/mascot-sheet.png`).
+- **Earth (`scripts/voxel_earth.gd`):**
+  - About 78,600 ground cubes on a 56-cell radius: ocean, continents raised one cell, polar ice.
+  - About 5,400 cloud cubes on their own shell.
+  - Coastlines come from `data/earth/land-mask.png`, rasterized by `tools/make_land_mask.py` from Natural Earth (public domain; `data/earth/SOURCES.md`).
+- **The `home` palette** is added for the reach.
+- **`scripts/shots/reach.gd`** is look development, with `view=side|top|touch`, Earth turning the Caribbean toward the camera (`renders/reach-looks.png`).
+  - The side view was reframed twice: Earth's limb at his boots made him look as if he stood on it. He now floats in front of Earth's face, with its limb high behind.
+
+**Next step**
+- The owner approves the mascot's look, the Earth looks, and the shot list for bars 32–48 (with the FPV dive).
+- Then: build the timed reach sequence, the mascot's star trail and the flight beside him after the touch, and render 1:00 onward.
+
+---
+
 ## 2026-10-03 — One minute: B-roll, close follow, static monolith, real board
 
 **Owner direction**
