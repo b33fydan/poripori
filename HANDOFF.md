@@ -56,7 +56,7 @@ Newest entry first. Each entry covers one working slice: what was decided, how i
   - **the telescope:** the flyers left frame too early;
   - **the finale:** the camera started inside the V;
   - **the follow cut:** the mascot blocked the lens.
-- **Full render:** `renders/film.mp4`, 5,770 frames, blur 4 × 0.5, about 75 min. `check_cuts.py`: all 22 cuts on their planned frames, no others.
+- **Full render:** `renders/film.mp4`, 5,770 frames, blur 4 × 0.5, about 40 min. `check_cuts.py`: all 22 cuts on their planned frames, no others.
 - **The touch:** sparks start on frame 2858, the drop's own frame, and the cut comes at 2864.
 - **Exposure** (share of pixels with luma > 0.95):
   - none above 0.2% except the telescope's beam, at 4.7%: the light itself, meant to be the brightest thing.
