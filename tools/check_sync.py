@@ -22,13 +22,13 @@ import librosa
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
-FFMPEG = "/opt/homebrew/bin/ffmpeg"
+from media import FFMPEG, FFPROBE  # the first ffmpeg that starts (tools/media.py)
 FPS = 30.0
 BOX = (1180, 20, 80, 80)  # x, y, w, h of the flash on a 1280x720 grid, as scripts/film.gd draws it
 
 
 def flash_frames(video):
-    width = int(subprocess.run([FFMPEG.replace("ffmpeg", "ffprobe"), "-v", "error", "-select_streams", "v:0", "-show_entries",
+    width = int(subprocess.run([FFPROBE, "-v", "error", "-select_streams", "v:0", "-show_entries",
                                 "stream=width", "-of", "csv=p=0", str(video)], capture_output=True, text=True, check=True).stdout.strip())
     x, y, w, h = (round(v * width / 1280) for v in BOX)
     raw = subprocess.run([FFMPEG, "-v", "error", "-i", str(video), "-vf", f"crop={w - 20}:{h - 20}:{x + 10}:{y + 10},scale=1:1:flags=area",

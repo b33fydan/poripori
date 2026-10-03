@@ -14,8 +14,8 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 GODOT=${GODOT:-/Users/beefymacmini/Downloads/Godot.app/Contents/MacOS/Godot}
-FFMPEG=${FFMPEG:-/opt/homebrew/bin/ffmpeg}
-FFPROBE=${FFPROBE:-/opt/homebrew/bin/ffprobe}
+FFMPEG=${FFMPEG:-$(python3 -c "import sys; sys.path.insert(0, '$(dirname "$0")'); from media import FFMPEG; print(FFMPEG)")}
+FFPROBE=${FFPROBE:-$(python3 -c "import sys; sys.path.insert(0, '$(dirname "$0")'); from media import FFPROBE; print(FFPROBE)")}
 FPS=30
 
 name=${1:?usage: tools/render.sh <name> shot=... song=... from=... to=... [size=WxH] [dither=1] [beats]}

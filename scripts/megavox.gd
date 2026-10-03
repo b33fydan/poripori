@@ -55,11 +55,12 @@ static func bounds(node: Node3D) -> AABB:
 	return box
 
 
-# Stand a model's base on its parent's origin, centred, `height` units tall.
-static func stand(node: Node3D, height: float) -> Node3D:
+# Stand a model's base on its parent's origin, centred, `height` units tall
+# (or less, so it is no wider than `max_width`).
+static func stand(node: Node3D, height: float, max_width := INF) -> Node3D:
 	var holder := Node3D.new()
 	var box := bounds(node)
-	var s := height / maxf(box.size.y, 0.001)
+	var s := minf(height / maxf(box.size.y, 0.001), max_width / maxf(maxf(box.size.x, box.size.z), 0.001))
 	node.scale = Vector3.ONE * s
 	node.position = -Vector3(box.get_center().x, box.position.y, box.get_center().z) * s
 	holder.add_child(node)

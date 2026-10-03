@@ -24,6 +24,7 @@ const MegavoxScript := preload("res://scripts/megavox.gd")
 const VoxelPartScript := preload("res://scripts/voxel_part.gd")
 const InkShader := preload("res://shaders/ink.gdshader")
 const SpaceScript := preload("res://scripts/space.gd")
+const KitScript := preload("res://scripts/broll_kit.gd")
 const PrintShader := preload("res://shaders/print.gdshader")
 
 const BITS_PATH := "res://data/arecibo/bits.txt"
@@ -176,20 +177,9 @@ func _plan_wall() -> void:
 	_land.resize(count)
 	for k in range(count):
 		_land[k] = start + eighth * (4.0 + round(k * 31.0 / (count - 1)))
-	_block_color = _tone("accent", "ink", 0.85)
-	var cube := BoxMesh.new()
-	cube.size = Vector3.ONE * BLOCK
-	var material := ShaderMaterial.new()
-	material.shader = PrintShader
-	cube.material = material
-	_blocks = MultiMesh.new()
-	_blocks.transform_format = MultiMesh.TRANSFORM_3D
-	_blocks.use_colors = true
-	_blocks.mesh = cube
-	_blocks.instance_count = count
-	var instance := MultiMeshInstance3D.new()
-	instance.multimesh = _blocks
-	add_child(instance)
+	_block_color = _tone("accent", "ink", 0.7)
+	# Placed blocks pulse yellow together; the rest wear white borders.
+	_blocks = KitScript.rim_cubes(self, BLOCK, count)
 
 
 func _slot_position(k: int) -> Vector3:
@@ -300,6 +290,7 @@ func _block_at(k: int, t: float) -> Array:
 func update(t: float) -> void:
 	RenderingServer.global_shader_parameter_set("song_time", t)
 	PaletteScript.apply(_palette)
+	KitScript.edge_glow(timeline, t)
 	var since := t - start
 	_pose_crew(t)
 	for k in range(_slots.size()):
@@ -313,10 +304,8 @@ func update(t: float) -> void:
 		var spin := Basis.IDENTITY
 		if landed < 0.0 and t >= _catch(k, 0) - HOP:
 			spin = Basis(Vector3(0.3, 1.0, 0.2).normalized(), (t - _land[k]) * 3.0)
-		_blocks.set_instance_transform(k, Transform3D(spin.scaled(Vector3(1.0 / sqrt(scale), scale, 1.0 / sqrt(scale))), at[0]))
-		var color := _block_color.srgb_to_linear()
-		color.a = flash
-		_blocks.set_instance_color(k, color)
+		var xf := Transform3D(spin.scaled(Vector3(1.0 / sqrt(scale), scale, 1.0 / sqrt(scale))), at[0])
+		KitScript.set_cube(_blocks, k, xf, _block_color, landed >= 0.0, flash > 0.5)
 	_place_camera(t)
 	# The sky wheels round: the hyperlapse's clock runs well ahead of the music's.
 	# The galaxy's band laid diagonally across the sky the camera looks at.

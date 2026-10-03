@@ -1,20 +1,31 @@
 {
- "about": "The film so far: song 0:00 to 1:47 (bar 54). Each cut runs until the next; cuts are placed on bars so they land on the beat (a cut shows on the first frame at or after its bar). Options other than 'shot' pass to the shot.",
+ "about": "The whole film: song 0:00 to the end (3:12.32). Each cut runs until the next; cuts are placed on bars so they land on the beat (a cut shows on the first frame at or after its bar). Options other than 'shot' pass to the shot. B-roll chapters follow the message top to bottom: numbers, elements, formulas (as the ring passes their colours in the first minute), then after the drop the DNA helix, the human (the break), the Solar System (the peak), and the telescope.",
  "song": "lost-in-the-void",
  "start": 0.0,
- "end": 107.2,
+ "end": 192.32,
  "cuts": [
   {"at": 0.0, "shot": "opening"},
   {"at_bar": 11, "shot": "broll_numbers"},
   {"at_bar": 16, "shot": "opening"},
+  {"at_bar": 18, "shot": "broll_elements"},
+  {"at_bar": 22, "shot": "opening"},
   {"at_bar": 24, "shot": "opening", "camera": "follow"},
-  {"at_bar": 26.5, "shot": "opening"},
-  {"at_bar": 32, "shot": "reach", "view": "side"},
+  {"at_bar": 26.5, "shot": "broll_formulas"},
+  {"at_bar": 31, "shot": "opening"},
+  {"at_bar": 32, "shot": "reach", "view": "rise"},
   {"at_bar": 36, "shot": "opening", "camera": "fpv1"},
-  {"at_bar": 38, "shot": "reach", "view": "top"},
+  {"at_bar": 38, "shot": "reach", "view": "rise"},
   {"at_bar": 42, "shot": "opening", "camera": "fpv2"},
-  {"at_bar": 44, "shot": "reach", "view": "reveal"},
+  {"at_bar": 44, "shot": "reach", "view": "over"},
   {"at_bar": 46, "shot": "reach", "view": "touch"},
-  {"at_bar": 48.5, "shot": "opening"}
+  {"at_bar": 48.1, "shot": "opening"},
+  {"at_bar": 54, "shot": "broll_helix"},
+  {"at_bar": 58, "shot": "opening"},
+  {"at_bar": 61, "shot": "opening", "camera": "follow"},
+  {"at_bar": 64, "shot": "broll_human"},
+  {"at_bar": 72, "shot": "broll_solar"},
+  {"at_bar": 82, "shot": "broll_telescope"},
+  {"at_bar": 92, "shot": "finale"},
+  {"at_bar": 95, "shot": "opening", "camera": "finale"}
  ]
 }

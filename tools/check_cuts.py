@@ -16,7 +16,7 @@ from pathlib import Path
 
 import numpy as np
 
-FFMPEG = "/opt/homebrew/bin/ffmpeg"
+from media import FFMPEG, FFPROBE  # the first ffmpeg that starts (tools/media.py)
 
 
 def main():

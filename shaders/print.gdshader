@@ -13,12 +13,16 @@ uniform float shadow_mix = 0.6;
 // Multiplies the colour: white for MultiMesh cubes (their colour is per
 // instance), a model surface's own colour for imported models (MEGAVOX).
 uniform vec4 tint = vec4(1.0);
+// Plain meshes have no vertex colours (COLOR reads white, so they'd always
+// print flat); they set this false and choose with `flat_amount` instead.
+uniform bool vertex_flat = true;
+uniform float flat_amount = 0.0;
 
 void fragment() {
 	vec3 base = COLOR.rgb * tint.rgb;
 	vec3 shade = mix(base, shadow.rgb, shadow_mix);
 	vec3 c = mix(base, shade, halftone(FRAGCOORD.xy, print_coverage(NORMAL, VIEW_MATRIX)));
 	ALBEDO = vec3(0.0);
-	EMISSION = mix(c, base, COLOR.a);
+	EMISSION = mix(c, base, vertex_flat ? COLOR.a : flat_amount);
 	ROUGHNESS = 1.0;
 }

@@ -36,6 +36,7 @@ var boot_l: Node3D
 var boot_r: Node3D
 var antenna_tip: Node3D
 var accent := ACCENT
+var asleep := false
 
 # Where the trail leaves the board, in rig space: the tail's underside.
 var tail_point := Vector3(-15.5 * U, -1.5 * U, 0.0)
@@ -44,10 +45,12 @@ var rail_pivot := Vector3(-15.5 * U, -2.0 * U, 3.0 * U)
 
 
 # `trim` colours this astronaut's stripes, cuffs and ear discs, so a crew can
-# tell its members apart. Builders on foot leave the board out.
-func _init(trim := ACCENT, with_board := true) -> void:
+# tell its members apart. Builders on foot leave the board out. `sleeping`
+# closes its eyes.
+func _init(trim := ACCENT, with_board := true, sleeping := false) -> void:
 	name = "Astronaut"
 	accent = trim
+	asleep = sleeping
 	if with_board:
 		_build_board()
 	rider = Node3D.new()
@@ -197,8 +200,13 @@ func _build_helmet() -> void:
 	head.name = "Head"
 	head.box(Vector3i(-4, 2, -3), Vector3i(4, 9, 4), SKIN)
 	head.box(Vector3i(-4, 8, -3), Vector3i(4, 9, 4), Color("#6b4a35"))   # hair line
-	head.box(Vector3i(-3, 5, 3), Vector3i(-2, 7, 4), FACE)              # eyes
-	head.box(Vector3i(2, 5, 3), Vector3i(3, 7, 4), FACE)
+	if asleep:
+		# Closed eyes: long, low lines.
+		head.box(Vector3i(-4, 5, 3), Vector3i(-1, 6, 4), FACE)
+		head.box(Vector3i(1, 5, 3), Vector3i(4, 6, 4), FACE)
+	else:
+		head.box(Vector3i(-3, 5, 3), Vector3i(-2, 7, 4), FACE)              # eyes
+		head.box(Vector3i(2, 5, 3), Vector3i(3, 7, 4), FACE)
 	head.paint(Vector3i(-4, 4, 3), BLUSH)
 	head.paint(Vector3i(3, 4, 3), BLUSH)
 	head.box(Vector3i(-1, 3, 3), Vector3i(1, 4, 4), FACE)               # mouth

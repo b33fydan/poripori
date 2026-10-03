@@ -26,6 +26,11 @@ extends Node3D
 # monolith's face during the reach (the rider is away floating, so it and
 # its board are hidden).
 #
+# camera=finale is the last shot (bar 95 to the end): far out, the whole
+# monolith at last, every row lit (the last ones in a wave down from the
+# ring), pulsing yellow, with Earth behind it. The rider and the mascot have
+# flown on.
+#
 # The drop (bar 48) lands the astronaut back on the board at the human
 # figure, with the mascot flying beside it from then on, leaving little
 # stars. While the reach plays elsewhere, the ring descends to the human
@@ -41,6 +46,7 @@ const PaletteScript := preload("res://scripts/palette.gd")
 const InkShader := preload("res://shaders/ink.gdshader")
 const MascotScript := preload("res://scripts/mascot.gd")
 const StarTrailScript := preload("res://scripts/star_trail.gd")
+const EarthScript := preload("res://scripts/voxel_earth.gd")
 
 const PITCH := 8.0           # a bit is a cube ~6.9 units across: four riders tall
 const ROWS := 73
@@ -59,8 +65,9 @@ const FOV := 56.0
 # The descent: [bar, the message row level with the ring]. Chapter edges
 # (row 4.5 between numbers and elements, 10.5 before the formulas) fall on
 # phrase downbeats: bar 16 and bar 24. Through the reach it drops fast to the
-# human figure's feet (row 54.6) for the drop at bar 48, then all but stops.
-const DESCENT := [[0.0, 1.0], [8.0, 2.6], [16.0, 4.5], [24.0, 10.5], [32.0, 18.0], [40.0, 34.0], [48.0, 54.6], [56.0, 55.6]]
+# human figure's feet (row 54.6) for the drop at bar 48, all but stops, then
+# eases on into the Solar System's gold by bar 64.
+const DESCENT := [[0.0, 1.0], [8.0, 2.6], [16.0, 4.5], [24.0, 10.5], [32.0, 18.0], [40.0, 34.0], [48.0, 54.6], [56.0, 55.6], [64.0, 59.0]]
 const JUMP_BAR := 40.0       # the rider is moved round the ring here, unseen
 const FRONT_AFTER_DROP := 6.4  # seconds after the drop the camera meets the front
 const FRONT_AT := 38.0       # song time when the monolith faces the camera
@@ -71,8 +78,9 @@ const FRONT_AT := 38.0       # song time when the monolith faces the camera
 const NOSE_UP := 12.0
 const SLOPE_LIMIT := 0.0524  # 3 degrees
 const RAIL := 11.0
-# The monolith's rims step through the rainbow, one colour a beat.
-const EDGE_HUES := [0.0, 0.07, 0.14, 0.33, 0.5, 0.6, 0.75, 0.88]
+# The monolith's rims pulse in one yellow (the owner's call: the rainbow
+# didn't blend), flaring on every beat.
+const EDGE_YELLOW := Color("#ffd75e")
 
 var options := {}
 var timeline
@@ -90,6 +98,8 @@ var stars: Node3D
 var _row_lit := PackedFloat64Array()
 var _angle_jump := 0.0
 var _descent_slopes := PackedFloat64Array()
+var earth: Node3D
+var _finale := 0.0            # bar 95: the last shot
 
 
 func setup(song_timeline) -> void:
@@ -129,6 +139,18 @@ func setup(song_timeline) -> void:
 	_angle_jump = wrapf(front + 2.4 / TRACK_RADIUS - track(meet).y, -PI, PI)
 	ring.paint(track, 0.0, float(options.get("to", "40")), 1.7)
 	_row_lit = _row_light_times(float(options.get("to", "40")) + 30.0)
+	_finale = timeline.bar_time(95.0)
+	if str(options.get("camera", "")) == "finale":
+		# The rows the ring never reached light in a wave as the shot opens.
+		var first_dark := ROWS
+		for row in range(ROWS):
+			if _row_lit[row] > _finale:
+				first_dark = mini(first_dark, row)
+		for row in range(first_dark, ROWS):
+			_row_lit[row] = _finale + 0.3 + 0.05 * (row - first_dark)
+		# A big Earth, far behind the monolith (cubes 20 units across).
+		earth = EarthScript.new(56, 20.0)
+		add_child(earth)
 
 
 func _build_ink_pass() -> void:
@@ -341,9 +363,10 @@ func update(t: float) -> void:
 	_set_edge_glow(t)
 	var mode := str(options.get("camera", ""))
 	var diving := mode.begins_with("fpv")
-	astronaut.visible = not diving
-	spray.visible = not diving
-	mascot.visible = not diving and t >= drop
+	var away := diving or mode == "finale"
+	astronaut.visible = not away
+	spray.visible = not away
+	mascot.visible = not away and t >= drop
 	stars.visible = mascot.visible
 	if mascot.visible:
 		mascot.transform = _mascot_transform(t)
@@ -353,6 +376,8 @@ func update(t: float) -> void:
 		_place_follow_camera(t, rig)
 	elif diving:
 		_place_fpv_camera(t, 1 if mode == "fpv1" else 2)
+	elif mode == "finale":
+		_place_finale_camera(t)
 	else:
 		_place_camera(t, rig)
 	space.update(t, camera.global_position, ink, palette["accent"], timeline.beat_pulse(t, 0.2) if t >= kick else 0.0)
@@ -436,15 +461,14 @@ func _place_camera(t: float, rig: Transform3D) -> void:
 	camera.look_at_from_position(eye + shake, target, Vector3.UP)
 
 
-# The lit monolith's rims and outlines: every cube's together, a new colour
-# of the rainbow on each beat, flaring on the beat and easing to a glow.
-# Nothing is lit before the kick.
+# The lit monolith's rims and outlines: every cube's together, in yellow,
+# flaring on the beat and easing to a glow. Nothing is lit before the kick.
 func _set_edge_glow(t: float) -> void:
-	var beat := floori(timeline.beat(t))
-	var hue: float = EDGE_HUES[posmod(beat, EDGE_HUES.size())]
 	var flare: float = timeline.beat_pulse(t, 0.35)
-	var color := Color.from_hsv(hue, 0.62, 0.95).srgb_to_linear()
-	var strength := (0.6 + 0.4 * flare) * smoothstep(kick - 0.05, kick + 0.3, t)
+	var color := EDGE_YELLOW.srgb_to_linear()
+	var strength := (0.55 + 0.45 * flare) * smoothstep(kick - 0.05, kick + 0.3, t)
+	if t >= _finale and str(options.get("camera", "")) == "finale":
+		strength = 0.3 + 0.9 * flare  # the widest pulse at the end, the colours showing between
 	RenderingServer.global_shader_parameter_set("monolith_edge", Vector4(color.r, color.g, color.b, strength))
 
 
@@ -484,6 +508,10 @@ func _mascot_frame(t: float) -> Array:
 	var outward := Vector3(cos(at.y), 0.0, sin(at.y))
 	var origin := board_position(t)
 	var bob: float = 0.08 * sin(TAU * timeline.beat(t) * 0.5)
+	if str(options.get("camera", "")) == "follow":
+		# The follow camera rides behind the tail: there the mascot flies on
+		# the inner side, a little ahead, clear of the lens.
+		return [origin + forward * 0.5 - outward * 1.0 + Vector3.UP * (1.45 + bob), forward, -outward]
 	return [origin - forward * 1.5 + outward * 0.5 + Vector3.UP * (1.35 + bob), forward, outward]
 
 
@@ -530,11 +558,12 @@ func _star_amount(t: float) -> float:
 func _place_fpv_camera(t: float, dive: int) -> void:
 	var a: float = timeline.bar_time(36.0 if dive == 1 else 42.0)
 	var b: float = timeline.bar_time(38.0 if dive == 1 else 44.0)
-	var from := Vector3(-26.0, 330.0, 44.0) if dive == 1 else Vector3(22.0, 95.0, 30.0)
-	var to := Vector3(-14.0, 20.0, 18.0) if dive == 1 else Vector3(-6.0, -84.0, 19.0)
+	# Slow enough to read (the owner asked): about 40 units a second.
+	var from := Vector3(-24.0, 315.0, 42.0) if dive == 1 else Vector3(12.0, 4.0, 26.0)
+	var to := Vector3(-16.0, 160.0, 26.0) if dive == 1 else Vector3(-6.0, -84.0, 19.0)
 	var u := clampf((t - a) / (b - a), 0.0, 1.0)
 	# Speed: dive 1 gathers it from a running start; dive 2 sheds it at the end.
-	u = lerpf(u, u * u, 0.45) if dive == 1 else lerpf(u, 1.0 - (1.0 - u) * (1.0 - u), 0.6)
+	u = lerpf(u, u * u, 0.3) if dive == 1 else lerpf(u, 1.0 - (1.0 - u) * (1.0 - u), 0.6)
 	var face: Vector3 = sculpture.basis.z.normalized()
 	var right: Vector3 = sculpture.basis.x.normalized()
 	var to_world := func(q: Vector3) -> Vector3: return sculpture.position + right * q.x + Vector3.UP * q.y + face * q.z
@@ -549,3 +578,26 @@ func _place_fpv_camera(t: float, dive: int) -> void:
 		look = look.slerp((human - eye).normalized(), 0.6 * smoothstep(0.5, 1.0, u))
 	camera.fov = 100.0
 	camera.look_at_from_position(eye, eye + look * 10.0, Vector3.UP)
+
+
+# --- The last shot -------------------------------------------------------------------
+
+# Far out in front of the monolith, pulling slowly back: the whole message
+# stands there at last, the ring round it, Earth huge behind and below,
+# turned so Arecibo faces us.
+func _place_finale_camera(t: float) -> void:
+	var u := clampf((t - _finale) / 4.0, 0.0, 1.0)
+	var face: Vector3 = sculpture.basis.z.normalized()
+	var right: Vector3 = sculpture.basis.x.normalized()
+	var centre := Vector3(0.0, -10.0, 0.0)
+	var eye := centre + face * lerpf(640.0, 790.0, smoothstep(0.0, 1.0, u)) + right * 60.0 + Vector3.UP * lerpf(-40.0, 10.0, u)
+	camera.fov = 52.0
+	camera.far = 9000.0
+	camera.look_at_from_position(eye, centre, Vector3.UP)
+	earth.position = centre - face * 2900.0 + right * 1350.0 - Vector3.UP * 1450.0
+	var toward := (eye - earth.position).normalized()
+	var yaw := atan2(toward.x, toward.z)
+	var pitch := asin(clampf(toward.y, -1.0, 1.0))
+	earth.basis = Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, deg_to_rad(18.34) - pitch) * Basis(Vector3.UP, deg_to_rad(66.75))
+	earth.clouds.rotation.y = 0.4 + 0.01 * (t - _finale)
+

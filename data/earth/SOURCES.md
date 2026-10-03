@@ -11,4 +11,12 @@ The voxel Earth (`scripts/voxel_earth.gd`) samples the mask for its coastlines. 
 - shades of green on land;
 - procedural clouds.
 
-- **Arecibo's position:** 18.34° N, 66.75° W, used to turn the Caribbean toward the camera. It still needs a cited source in `docs/FACTS.md` before anything about it goes on screen.
+- **Arecibo's position:** 18.3442° N, 66.7528° W, used to turn the Caribbean toward the camera and to place the telescope on Puerto Rico. Its sources are in `docs/FACTS.md`.
+
+`puerto-rico-mask.png` (127 × 48 cells, white is land) and `puerto-rico-mask.json` (its extent and the telescope's cell) were rasterized by `tools/make_pr_mask.py` on 2026-10-03 from Natural Earth's 1:10m land polygons:
+
+- **Natural Earth, `ne_10m_land.geojson`:** https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_land.geojson
+  - Downloaded with the owner's permission on 2026-10-03 (10,157,965 bytes). The SHA-256 of the file as fetched is `1ac90796408bc6ad6911d69448485d3c4dbf2190370080368a09976e1c9f7416`.
+  - Natural Earth is public domain (https://www.naturalearthdata.com/about/terms-of-use/).
+- **Kept:** every land polygon inside 67.36°–65.16° W, 17.82°–18.62° N: the main island (236 points), Vieques and Culebra. Mona Island, further west, is outside the frame.
+- **Cells** are square on the ground: 0.0165° of latitude (about 1.8 km) by 0.0174° of longitude.

@@ -99,4 +99,4 @@ func update(t: float, row_lit: PackedFloat64Array, pulse: float, unlit: Color, p
 		var color := unlit.lerp(base.lerp(paper, 0.24), on).srgb_to_linear()
 		color.a = 1.0 if flash > 0.35 else 0.0
 		multimesh.set_instance_color(i, color)
-		multimesh.set_instance_custom_data(i, Color(on, 0.0, 0.0, 0.0))
+		multimesh.set_instance_custom_data(i, Color(on, 1.0, 0.0, 0.0))

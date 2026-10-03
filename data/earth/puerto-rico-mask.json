@@ -1,0 +1,19 @@
+{
+ "about": "Puerto Rico land mask from Natural Earth ne_10m_land (public domain); see data/earth/SOURCES.md. Row 0 is the north edge, column 0 the west edge.",
+ "west": -67.36,
+ "east": -65.16,
+ "south": 17.82,
+ "north": 18.62,
+ "cell_lat_deg": 0.0165,
+ "cell_lon_deg": 0.017369,
+ "width": 127,
+ "height": 48,
+ "polygons": 3,
+ "telescope": {
+  "latitude": 18.3442,
+  "longitude": -66.7528,
+  "column": 34,
+  "row": 16,
+  "on_land": true
+ }
+}

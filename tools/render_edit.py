@@ -32,8 +32,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 GODOT = "/Users/beefymacmini/Downloads/Godot.app/Contents/MacOS/Godot"
-FFMPEG = "/opt/homebrew/bin/ffmpeg"
-FFPROBE = "/opt/homebrew/bin/ffprobe"
+from media import FFMPEG, FFPROBE  # the first ffmpeg that starts (tools/media.py)
 FPS = 30
 
 

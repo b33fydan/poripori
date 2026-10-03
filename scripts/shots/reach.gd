@@ -1,17 +1,19 @@
 extends Node3D
 
 # The reach (song 1:03.5 to the drop at 1:35.3): the astronaut jumps off the
-# board and floats up in slow motion, a massive voxel Earth behind, turned so
+# board and floats up in slow motion from a massive voxel Earth, turned so
 # the Caribbean (Arecibo, 18.34 N 66.75 W) faces the camera. Seen from:
-#   view=side    (bars 32-36): he springs off the board, one fist punched up
-#     in triumph, and the camera follows him up as Earth falls away below;
-#   view=top     (bars 38-42): looking down from above, he lowers the fist and
-#     turns slowly;
-#   view=reveal  (bars 44-46): from below, his glove rises until it points up;
-#   view=touch   (bars 46-48.5): the mascot, revealed above him, looks down
-#     and slides its little arm out toward him; the camera closes slowly on
-#     their hands, and they touch exactly on the drop's first kick, throwing
-#     sparks and stars.
+#   view=rise    (bars 32-36 and 38-42, one continuous take either side of
+#     FPV dive 1): a camera fixed in space above him. He springs off the
+#     board, punches a fist up, and comes up from Earth toward the lens;
+#     he passes it and keeps rising, the camera turning in place to follow.
+#   view=over    (bars 44-46): third person from above and behind the
+#     mascot, which hangs in space looking down; he comes up toward it,
+#     glove raised, Earth far below.
+#   view=touch   (bars 46-48.1): facing them both, the camera closes slowly on
+#     their hands as the last of the gap closes: no telescoping arm, they
+#     simply reach and touch, exactly on the drop's first kick. Sparks and
+#     stars fly, and the film cuts away at once.
 # His rise is one continuous motion from bar 32, so every view shows the
 # same moment. Slow motion: everything drifts.
 
@@ -25,9 +27,13 @@ const PaletteScript := preload("res://scripts/palette.gd")
 const InkShader := preload("res://shaders/ink.gdshader")
 
 const ARECIBO := Vector2(18.34, -66.75)  # latitude, longitude
-const RISE := 0.16                         # his steady rise, units per second
+const RISE := 0.3                          # his steady rise, units per second
 const JUMP := 1.6                          # how far the spring off the board carries him
 const JUMP_TIME := 0.7                     # seconds: how fast that spring dies away
+const RISE_CAMERA := Vector3(2.1, 6.1, 1.4)  # where the fixed camera hangs; he passes it near bar 39.6
+const EARTH_BELOW := Vector3(-250.0, -1250.0, -350.0)  # Earth's centre in the rise view
+const LINE := Vector3(0.9, 0.75, 0.0)       # from his glove up to the mascot
+const GAP := 2.4                           # glove to the mascot's arm tip at bar 44
 
 var options := {}
 var timeline
@@ -160,109 +166,123 @@ func _face_arecibo(toward: Vector3, t: float) -> void:
 func update(t: float) -> void:
 	RenderingServer.global_shader_parameter_set("song_time", t)
 	PaletteScript.apply(_palette)
-	var view := str(options.get("view", "side"))
+	var view := str(options.get("view", "rise"))
 	var body := _body_position(t)
 	astronaut.position = body
 	mascot.visible = false
 	stars.visible = false
 	sparks.visible = false
 	var since := t - lift
-	if view == "side":
-		_place_side(t, body, since)
-	elif view == "top":
-		# The fist comes down slowly as he turns, floating.
-		_float_pose(t, 1.0, 0.0, 1.0 - smoothstep(timeline.bar_time(38.0), timeline.bar_time(40.0), t))
-		_hide_board()
-		var rise: float = t - timeline.bar_time(38.0)
-		astronaut.rotation = Vector3(-0.35, 0.9 + 0.05 * rise, 0.12)
-		earth.position = body + Vector3(40.0, -1150.0, 60.0)
-		camera.fov = 44.0
-		camera.look_at_from_position(body + Vector3(0.6, 9.0 - rise * 0.22, 1.4), body + Vector3(0.0, 0.4, 0.0), Vector3.UP)
-	elif view == "reveal":
-		# From below: his glove rises, slowly, until it points straight up.
-		var reach := smoothstep(timeline.bar_time(44.0), timeline.bar_time(45.8), t)
-		_float_pose(t, 1.0, reach)
-		_hide_board()
-		var drift: float = t - timeline.bar_time(44.0)
-		astronaut.rotation = Vector3(0.05, 0.4 + 0.02 * drift, 0.0)
-		camera.fov = 36.0
-		camera.look_at_from_position(body + Vector3(1.5 - drift * 0.05, -0.9 + drift * 0.04, 3.3), body + Vector3(0.25, 1.05, 0.0), Vector3.UP)
-		_earth_behind(0.74)
+	if view == "rise":
+		_place_rise(t, body, since)
+	elif view == "over":
+		_place_over(t)
 	else:
-		_place_touch(t, body)
+		_place_touch(t)
 	_face_arecibo(camera.global_position - earth.position, t)
 	space.update(t, camera.global_position, _palette["ink"], _palette["accent"], 0.0)
 
 
-# The jump: he springs off the board and, at the top of the spring, punches
-# one fist up overhead. The camera rides up with him, a beat behind at
-# first so he shoots up the frame, while Earth falls away below and shrinks.
-# He turns his front, and the raised fist, toward the camera.
-func _place_side(t: float, body: Vector3, since: float) -> void:
-	var up := smoothstep(0.0, 1.2, since)
-	# The punch: up fast, a little past, and settling.
-	var punch := maxf(since - 0.35, 0.0)
-	var fist := 1.0 - exp(-punch * 4.0) * cos(punch * 7.0)
-	astronaut.rotation = Vector3(0.1 * up, 1.75 + 0.025 * since, -0.06 * up)
-	_float_pose(t, up, 0.0, fist)
-	_place_board(t)
-	camera.fov = 42.0
+# The fist: punched up at the top of the spring, up fast, a little past and
+# settling; lowered while the second dive plays, before he reaches.
+func _fist(t: float) -> float:
+	var punch := maxf(t - lift - 0.35, 0.0)
+	var up := 1.0 - exp(-punch * 4.0) * cos(punch * 7.0)
+	return up * (1.0 - smoothstep(timeline.bar_time(42.0), timeline.bar_time(43.5), t))
+
+
+# His left glove rises toward the mascot.
+func _reach(t: float) -> float:
+	return smoothstep(timeline.bar_time(43.5), timeline.bar_time(45.5), t)
+
+
+# One fixed camera. He comes up from Earth toward it, turned to it and
+# looking up; he passes it and keeps rising, and it turns in place to follow.
+func _place_rise(t: float, body: Vector3, since: float) -> void:
 	var s := maxf(since, 0.0)
-	var follow := Vector3(0.0, RISE * s + JUMP * (1.0 - exp(-s / (JUMP_TIME * 2.2))), 0.0)
-	var eye := follow + Vector3(5.6, 2.4 + 0.05 * s, 1.6)
-	camera.look_at_from_position(eye, follow + Vector3(0.0, 0.45, 0.0), Vector3.UP)
-	# Earth falls away: further and lower in the frame as he climbs.
-	var away := 1.0 - exp(-s * 0.32)
-	_earth_behind(lerpf(0.72, 0.62, away), lerpf(980.0, 1700.0, away), Vector3.ZERO)
+	var up := smoothstep(0.0, 1.2, s)
+	var near := smoothstep(16.0, 4.0, s)  # looking up at the lens as he comes
+	astronaut.rotation = Vector3(-0.25 * near * up, 0.75 + 0.02 * s, 0.05 * up)
+	_float_pose(t, up, 0.0, _fist(t))
+	astronaut.helmet.rotation.x -= 0.3 * near * up
+	_place_board(t)
+	earth.position = EARTH_BELOW
+	camera.fov = 46.0
+	camera.look_at_from_position(RISE_CAMERA, body + Vector3(0.0, 0.8, 0.0), Vector3.UP)
 
 
-# The touch. The mascot hangs above him, looking down, and slides its right
-# arm out along a line from the upper right toward his raised glove. The gap
-# closes fast at first and then ever more slowly, to nothing exactly at the
-# drop, while the camera closes slowly from the pair to their hands. Then
-# sparks and stars fly.
-func _place_touch(t: float, body: Vector3) -> void:
-	_float_pose(t, 1.0, 1.0)
+# The touch's geometry, shared by the last two views so they agree: the
+# mascot hangs on the line up from his glove, its right arm (at rest, not
+# extended) pointing down the line, the gap from that arm's tip to the
+# glove closing from GAP at bar 44 to nothing exactly at the drop, slowing
+# all the way. It faces +Z, where the touch's camera is, tipped to look down
+# at him, so its arm reaches out sideways and down and their hands meet
+# clear of its body. Returns its body's centre.
+func _place_mascot(t: float) -> Vector3:
+	var glove := _glove()
+	var line := LINE.normalized()
+	var start: float = timeline.bar_time(44.0)
+	var u := clampf((t - start) / (touch - start), 0.0, 1.0)
+	var gap := GAP * pow(1.0 - u, 2.2)
+	var tip := 2.0 * MascotScript.P
+	var root := glove + line * (tip + gap)
+	var centre := root + line * 0.4 + Vector3.UP * 0.1
+	var helmet: Vector3 = astronaut.helmet.global_position + Vector3(0.0, 0.3, 0.0)
+	var facing := ((helmet - centre).normalized() * 0.3 + Vector3(0.0, -0.25, 1.0).normalized() * 0.7).normalized()
+	mascot.visible = true
+	mascot.basis = Basis.looking_at(-facing, Vector3.UP)
+	mascot.point(false, 0.0, mascot.basis.inverse() * -line)
+	mascot.point(true, 0.0, Vector3(1.0, -0.3, 0.2))
+	mascot.position = root - mascot.basis * mascot.arm_r.position
+	mascot.hover(t * 2.0)
+	return mascot.position + mascot.basis * Vector3(0.0, MascotScript.LEG * MascotScript.P + 0.3, 0.0)
+
+
+# Floating, reaching up with his left glove; the board long gone.
+func _pose_reaching(t: float) -> void:
+	_float_pose(t, 1.0, _reach(t), _fist(t))
 	_hide_board()
 	astronaut.rotation = Vector3(0.05, 0.46, 0.0)
+
+
+# Above and behind the mascot, looking down past it: he comes up toward it,
+# glove raised, Earth far below.
+func _place_over(t: float) -> void:
+	_pose_reaching(t)
+	var centre := _place_mascot(t)
+	var helmet: Vector3 = astronaut.helmet.global_position
+	var drift: float = t - timeline.bar_time(44.0)
+	var eye := centre + Vector3(0.5, 1.8 - 0.04 * drift, -1.6 + 0.05 * drift)
+	camera.fov = 50.0
+	camera.look_at_from_position(eye, centre.lerp(helmet, 0.75), Vector3.UP)
+	_earth_behind(0.42, 2300.0, Vector3.ZERO)
+
+
+# The touch: facing them, from below, the camera closing from the pair to
+# their hands by the drop. Sparks and stars fly on it; the cut comes a few
+# frames later.
+func _place_touch(t: float) -> void:
+	_pose_reaching(t)
 	var glove := _glove()
-	var line := Vector3(0.9, 0.75, 0.0).normalized()  # from the glove up to the mascot
-	var start: float = timeline.bar_time(46.3)
-	var u := clampf((t - start) / (touch - start), 0.0, 1.0)
-	var s := 1.0 - pow(1.0 - u, 2.4)
-	var full := float(MascotScript.ARM_CUBES) * MascotScript.P
-	var root := glove + line * (full + (1.0 - s) * 1.6)
-	var mascot_at := root + line * 0.35 + Vector3.UP * 0.25  # its body, near enough
-	# The camera: below and in front, looking up; from the pair (his helmet
-	# low left, the mascot up right) in to their hands, the mascot's face
-	# still in the top of the frame.
+	var centre := _place_mascot(t)
 	var cut: float = timeline.bar_time(46.0)
-	var close := smoothstep(cut + 0.4, touch, t)
+	var close := smoothstep(cut + 0.3, touch, t)
 	close = close * close * (3.0 - 2.0 * close)
 	var after := maxf(t - touch, 0.0)
 	var helmet: Vector3 = astronaut.helmet.global_position + Vector3(0.0, 0.3, 0.0)
-	var wide := helmet.lerp(mascot_at, 0.55)
-	var target := wide.lerp(glove.lerp(mascot_at, 0.2), close)
-	var eye := target + Vector3(-0.25, -1.0, 4.2).lerp(Vector3(0.6, -0.6, 2.4), close)
-	eye += Vector3(0.0, 0.0, -0.12) * after
-	var shake := Vector3(sin(t * 53.0), sin(t * 41.0), 0.0) * 0.008 * exp(-after * 6.0) * float(t >= touch)
+	var wide := helmet.lerp(centre, 0.5)
+	var target := wide.lerp(glove.lerp(centre, 0.25), close)
+	var eye := target + Vector3(-0.25, -0.9, 4.0).lerp(Vector3(-0.2, -0.85, 2.2), close)
+	var shake := Vector3(sin(t * 53.0), sin(t * 41.0), 0.0) * 0.01 * exp(-after * 6.0) * float(t >= touch)
 	camera.fov = lerpf(38.0, 30.0, close)
 	camera.look_at_from_position(eye + shake, target, Vector3.UP)
-	# The mascot looks down at him, its face turned to the camera below.
-	mascot.visible = true
-	var to_camera := (eye - mascot_at).normalized()
-	var to_helmet := (helmet - mascot_at).normalized()
-	var facing := (to_camera * 0.6 + to_helmet * 0.4).normalized()
-	mascot.basis = Basis.looking_at(-facing, Vector3.UP)
-	# Its right arm points down the line at the glove, sliding out.
-	mascot.point(false, s, mascot.basis.inverse() * -line)
-	mascot.position = root - mascot.basis * mascot.arm_r.position
-	mascot.hover(t * 2.0)
-	# Sparks and the burst of stars, on the drop.
 	if not stars.has_meta("burst"):
-		stars.burst(touch, glove + line * 0.03, 40, 1.8)
+		# Where the hands meet at the drop: here, carried up by his rise (his
+		# pose no longer changes once the glove is up).
+		var at := glove + LINE.normalized() * 0.03 + _body_position(touch) - _body_position(t)
+		stars.burst(touch, at, 40, 1.8)
+		sparks.burst(touch, at, 110, 3.4, 0.9)
 		stars.set_meta("burst", true)
-		sparks.burst(touch, glove + line * 0.03, 110, 3.4, 0.9)
 	stars.visible = true
 	sparks.visible = true
 	stars.update(t)
