@@ -16,7 +16,8 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
   - Rows light as the ring reaches them.
   - The monolith is revealed whole only at the end.
   - The pace is set in bars (`DESCENT` in `scripts/shots/opening.gd`), so chapter changes land on phrase downbeats.
-- **The ring's colour:** the ring and the night take the colour of the chapter the ring is passing.
+- **The ring's colour:** the ring takes the colour of the chapter it is passing.
+- **The sky stays black in every scene (owner's call, 2026-10-03, polishing):** tinted nights flooded the whole frame with each chapter's hue. The galaxy band is a neutral grey, the stars keep their own faint warm and cool whites, and shade falls toward a neutral near-black. Only the objects (the ring, the floors, the cubes) carry the chapter's colour.
 - **The camera:** third person from behind the astronaut, toward the monolith. It rides just outside the ring, looking in past the astronaut's back, and the board slides across the frame. A close follow (`camera=follow`) rides low behind the board's tail for short punchy cuts.
 - **The monolith stays static (owner's call, 2026-10-03),** for realism. The camera sees it from changing angles. Its facing is set so key moments happen from the front: through the opening it's front-on at 0:38 and never edge-on or from behind.
 - **The board rides like a real surfboard:** about 1.55 units long, close to the rider's height. It's rolled about 11° onto its toe-side rail, pivoting on that rail at the tail.
@@ -24,6 +25,8 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
 - **The rider's stance (owner's call, 2026-10-03):** from the very first frame he holds the groove's stance, arms open and low and knees bent, breathing with the bar in the intro. Standing upright with arms down looked stiff. The kick still springs him and the drop still lands him.
 - **The monolith's rims (owner's call, 2026-10-03):** once a row is lit, every cube wears a thin rim of light round each face, and its outlines take the same colour. The whole monolith pulses together in one yellow, flaring on every beat (`shaders/monolith.gdshader`, the `monolith_edge` global). A rainbow stepping one colour a beat was tried first and dropped: the colours didn't blend.
 - **Rims in the B-roll (owner's call, 2026-10-03):** a cube once placed pulses in the same yellow; a cube not yet placed (in a pile, in flight, in a replica) wears a steady white border, so none looks bland.
+- **The lights (owner's idea, 2026-10-03):** through the monolith's yellow runs a pattern of black borders, like strings of Christmas lights, changing every phrase (4 bars): a diagonal sweep, bands falling down the rows, twinkling, rings rippling out from the middle (`monolith_pattern` global, `shaders/monolith.gdshader`).
+- **Black borders (owner's call, 2026-10-03):** the numbers B-roll's pale trees, and the planets' cubes. The ink pass draws black outlines for any surface marked with roughness 0.5: full black at the silhouette, softer along inner creases so dense voxel work doesn't fill in.
 - **The sky:** no moon (removed 2026-10-02). About 1,800 voxel stars, and floating dust for parallax, 10% of it smaller.
 
 ## The style reference
@@ -71,7 +74,7 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
 - **1:36, the touch:** the drop (bar 48, 95.27 s). The astronaut and the mascot touch hands as the beat kicks back in.
   - **Where the ring is:** while the reach plays, the ring descends to the human figure's feet (row 54.6). The rider is moved round the ring unseen, so the drop meets the monolith's front.
   - **From bar 48.5:** back on the ring in the human chapter's red, with the lit human figure towering, and the mascot flying beside him leaving little stars.
-- **The voice (from the touch onward):** "Gervis", the owner's voice character, speaks in the background like a PA or a radio transmission. The owner will write the inspiring words. Only then does text appear on screen: the spoken words, as captions.
+- **The voice:** "Gervis", the owner's voice character, speaks like a radio transmission between astronauts. The first transmission, 1:09–1:29, is written and approved (`docs/VOICE.md`); the owner records and adds the voice in post (`tools/radio_voice.py` gives it the space-radio sound). Its words appear as captions, typing themselves in like a transmission readout (`edits/film.captions.ass`, burned onto a copy by `tools/burn_captions.py`).
 
 ## The rest of the story (owner's outline, 2026-10-03; built the same day)
 
@@ -99,7 +102,7 @@ The last shot starts at bar 95 rather than 96 as first proposed: from bar 96 the
 - **The DNA formulas:** astronauts at a conveyor belt work on parts of it as they come down the belt, while others in the background examine the sequences.
 - **The DNA helix:** astronauts at computer stations, as the double helix materialises from the ground up in the middle.
 - **The human:** astronauts in a lab, switching stations. In front of them is a huge glass window, and behind it a large astronaut, apparently asleep, beside the message's human figure, as if they were studying the figure and comparing it with the large astronaut.
-- **The Solar System:** an FPV flight, flying horizontally and dodging between the planets as astronauts assemble each one. It starts from the last planet and ends at the Sun, which shines bright; all the astronauts gather round it, jumping for joy. As built: Pluto in, as the 1974 message has it; the weave is smooth with a light bank (the dives' lesson).
+- **The Solar System:** an FPV flight, flying horizontally and dodging between the planets as astronauts assemble each one. It starts from the last planet and ends at the Sun, which shines bright; all the astronauts gather round it, jumping for joy. As built: Pluto in, as the 1974 message has it. The first weave turned up to 186° a second and was hard on the eyes (owner's note); it is now one long gentle sway, turning at most 20° a second, with no bank.
 - **The telescope, and the end:**
   - astronauts build the telescope from the ground up;
   - the floor round it falls away, revealing the shape of Puerto Rico, and the camera zooms out: the telescope was built on Puerto Rico;

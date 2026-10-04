@@ -25,7 +25,7 @@ About 44 words in 20 seconds, a calm radio pace with a breath between lines. It 
 
 ## Captions
 
-`edits/film.captions.ass`, in the style of a transmission readout: Menlo bold, upper case, pale cream with a black outline, low and centred, each line typing itself in word by word. `python3 tools/burn_captions.py` burns them into a copy (`renders/film-captioned.mp4`); `film.mp4` stays clean, so the captions can be retimed to the recording without rendering again.
+`edits/film.captions.ass`, in the style of a transmission readout: Menlo bold, upper case, pale cream with a black outline, low on the left, each line typing itself in word by word. `python3 tools/burn_captions.py` burns them into a copy (`renders/film-captioned.mp4`); `film.mp4` stays clean, so the captions can be retimed to the recording without rendering again.
 
 ## Making it sound like space
 

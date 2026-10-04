@@ -2,6 +2,60 @@
 
 Newest entry first. Each entry covers one working slice: what was decided, how it was checked, and the exact next step.
 
+## 2026-10-03 — Polish: black sky, black borders, the lights, a smooth flight, the voice script
+
+**Owner direction**
+- Each chapter's colour floods the whole screen; don't change the whole scene's colour: the galaxy stays black in every scene.
+- The blue trees at 0:22–0:31 look washed out: give them black borders.
+- A Gervis transmission at 1:09–1:29, distorted like radio between astronauts.
+  - The owner's two questions, answered in a line that leads into their words.
+  - The draft was approved; the owner will add the voice in post.
+- The Solar System flight turns sharply and is hard on the eyes: make it smooth.
+- The planets' cubes need black borders too.
+- A wave of black borders crossing the monolith, like patterned Christmas lights.
+
+**What changed**
+- **The sky:**
+  - `print_sky.gdshader` is all but black, with a neutral grey galaxy band (`night` and `band_tint` uniforms), whatever the palette.
+  - `space.gd`: stars in fixed warm and cool whites, dust a neutral grey.
+  - `palette.gd`: night shade falls to a neutral `NIGHT_SHADE` (#0b0c12), not the tinted paper.
+  - The ring, floors and cubes keep their chapter colours.
+- **Black borders:**
+  - `print.gdshader` has `outline_mark` (written as roughness), and `Megavox.print_look(..., black_outline)` sets it.
+  - `ink.gdshader` draws black where the nearest surface reads 0.5: full at silhouettes, 45% along inner creases. A dense tree first filled in black.
+  - The numbers B-roll's trees use it, and their recolour ramp keeps off the palest tones.
+  - `monolith.gdshader` has a third kind, 2, a steady black border (`BrollKit.set_cube_black`), used by the planets.
+- **The lights:**
+  - `monolith.gdshader` reads each cube's row and column from INSTANCE_CUSTOM.ba.
+  - The new global `monolith_pattern` (pattern, phase in beats, on) picks four patterns: a diagonal sweep, falling bands, twinkling, ripples.
+  - `opening.gd` changes the pattern every 4 bars from the kick. Dark cubes mark roughness 0.5 so their outlines go black too.
+- **The flight (`broll_solar.gd`):**
+  - One cosine sway of 1 unit, away from each planet in turn, with y swaying 0.25.
+  - The view is the path's direction over -0.3..+0.9 s, with no glance and no bank.
+  - Measured with a probe over every frame: the fastest turn fell from 186°/s to 20°/s.
+- **The voice:**
+  - `docs/VOICE.md` holds the script and its timing.
+  - `edits/film.captions.ass` holds the captions: Menlo bold upper case, typing in word by word with `\ko`, left-aligned (centred, a half-typed line sat off to one side), and no shadow, which ghosted the words early.
+  - `tools/burn_captions.py` burns them onto a copy.
+  - `tools/radio_voice.py` lays a recording over the film as a transmission (details in VOICE.md).
+    - It was checked on a test tone and a throwaway Mac test voice in scratch, never committed.
+    - Two fixes came from that: the ducking cut the song short until the voice was padded, and an echo stage's 0.35 out-gain buried the voice.
+
+**How it was checked**
+- Stills of each change.
+- **Full render:** `renders/film.mp4`, 5,770 frames, blur 4 × 0.5. `check_cuts.py`: all 22 cuts on their planned frames, no others.
+- **The background:** the darkest third of every cut is near neutral (chroma at most 0.06, where the dark third takes in the lab's desks and the belt's floor).
+- **Exposure:** unchanged from the last render; only the beam clips, at 4.2%.
+- **The captions:** checked on frames at 1:10, 1:17 and 1:28.
+- **Copies:** `renders/film-captioned.mp4` (1080p, captions burned in), `film-preview.mp4` (720p) and `film-phone.mp4` (540p, under 30 MB), both made from the captioned copy.
+
+**Next step**
+- The owner reviews and records the Gervis lines.
+- Then: `python3 tools/radio_voice.py <recording>` on `renders/film.mp4`, `tools/burn_captions.py` on the result, and the captions retimed to the recording if needed.
+- Still to come: the end-card credits (MEGAVOX wording from its creator).
+
+---
+
 ## 2026-10-03 — The whole story, 0:00 to the end (3:12)
 
 **Owner direction**
