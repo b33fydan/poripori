@@ -2,6 +2,44 @@
 
 Newest entry first. Each entry covers one working slice: what was decided, how it was checked, and the exact next step.
 
+## 2026-10-04 — No text; the last shot in the message's original colours
+
+**Owner direction**
+- Remove the text we added (the captions).
+- From 3:08.53 to the end, colour the Arecibo Message in its original colours, the cube sides humming gently in that colour, the cube lines black.
+
+**What changed**
+- **No captions in the film.**
+  - `renders/film-captioned.mp4` was deleted, and the previews are made from the clean `film.mp4` again.
+  - The captions file and `tools/burn_captions.py` stay in the repo, unused. `docs/VOICE.md` and `DIRECTION.md` say so.
+- **The original colours:**
+  - **The source:** the well-known coloured picture is Arne Nordmann's `File:Arecibo_message.svg` on Wikimedia Commons. Its SVG was read through WebFetch: six fills, with each colour's row range in the message.
+  - **Mapping:** matched to `sections.json`'s regions and stored as each region's `original`:
+    - white: numbers, nucleotide count, population;
+    - purple #ac0fc6: elements, telescope;
+    - green #10ce0e: formulas;
+    - blue #0e72ff: helix, height, telescope size;
+    - red #e60718: human;
+    - yellow #f8ff11: Solar System.
+  - Pure white is toned to #f4f6ff. The sources are in `data/arecibo/SOURCES.md`, and `tools/verify_arecibo.py` still passes.
+  - The row ranges came through a summarizer, not a pixel check. Telescope-size row 71 might be white in the original rather than blue.
+- **`message_sculpture.gd`:**
+  - `update(..., original)` uses those colours untoned with kind 2: black rims, and outlines marked black.
+  - The faces hum: brightness 0.84–1.0 on a 1.6 s sine that rolls down the rows.
+  - `opening.gd` turns it on for `camera=finale` from bar 95 (188.49 s, the cut at 3:08.5).
+- **The render:** only cut 22 was re-rendered (`--only 22`) and spliced in.
+
+**How it was checked**
+- **Stills** of the last shot at 188.55, 189.3, 190.5 and 192.2 s, plus a close crop: every region in its colour, black lines between the cubes, the hum visible as a band of dimmer rows.
+- **`check_cuts.py`:** all 22 cuts on their planned frames.
+- **The previews:** `film-preview.mp4` (720p) and `film-phone.mp4` (540p), with no text.
+
+**Next step**
+- The owner adds the Gervis voice in post (`tools/radio_voice.py <recording>` on `renders/film.mp4`).
+- Still to come: the end-card credits (MEGAVOX wording from its creator), then posting.
+
+---
+
 ## 2026-10-03 — Polish: black sky, black borders, the lights, a smooth flight, the voice script
 
 **Owner direction**

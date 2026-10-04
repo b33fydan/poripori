@@ -39,7 +39,7 @@ func _init(cube_pitch := 3.0) -> void:
 		for column in range(COLUMNS):
 			if bits[row * COLUMNS + column] == "1":
 				var region := _region_of(row, column)
-				_cubes.append([row, column, chapters.find(str(region["chapter"])), Color(str(region["color"]))])
+				_cubes.append([row, column, chapters.find(str(region["chapter"])), Color(str(region["color"])), Color(str(region["original"]))])
 	var cube := BoxMesh.new()
 	cube.size = Vector3.ONE * pitch * 0.86
 	var material := ShaderMaterial.new()
@@ -85,7 +85,11 @@ func height() -> float:
 # `paper` so white rows don't blow out. `pulse` swells the cubes on the beat.
 # Lit cubes wear rims of light in the global monolith_edge colour (set by the
 # shot), all changing together.
-func update(t: float, row_lit: PackedFloat64Array, pulse: float, unlit: Color, paper: Color) -> void:
+#
+# `original` (the last shot) dresses the message in its well-known colours
+# instead (data/arecibo/SOURCES.md), untoned, with black rims and outlines;
+# their faces hum gently, a slow swell of brightness rolling down the rows.
+func update(t: float, row_lit: PackedFloat64Array, pulse: float, unlit: Color, paper: Color, original := false) -> void:
 	for i in range(_cubes.size()):
 		var cube: Array = _cubes[i]
 		var row: int = cube[0]
@@ -96,7 +100,14 @@ func update(t: float, row_lit: PackedFloat64Array, pulse: float, unlit: Color, p
 		var pop := 1.0 + 0.35 * flash - 0.12 * (1.0 - on) + 0.06 * pulse * on
 		multimesh.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ONE * pop), home(row, cube[1])))
 		var base: Color = cube[3]
-		var color := unlit.lerp(base.lerp(paper, 0.24), on).srgb_to_linear()
+		var lit_color := base.lerp(paper, 0.24)
+		var kind := 1.0
+		if original:
+			var hum := 0.84 + 0.16 * sin(TAU * t / 1.6 - row * 0.12)
+			lit_color = (cube[4] as Color) * hum
+			lit_color.a = 1.0
+			kind = 2.0
+		var color := unlit.lerp(lit_color, on).srgb_to_linear()
 		color.a = 1.0 if flash > 0.35 else 0.0
 		multimesh.set_instance_color(i, color)
-		multimesh.set_instance_custom_data(i, Color(on, 1.0, row / 100.0, float(cube[1]) / 100.0))
+		multimesh.set_instance_custom_data(i, Color(on, kind, row / 100.0, float(cube[1]) / 100.0))

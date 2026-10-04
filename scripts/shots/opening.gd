@@ -28,8 +28,9 @@ extends Node3D
 #
 # camera=finale is the last shot (bar 95 to the end): far out, the whole
 # monolith at last, every row lit (the last ones in a wave down from the
-# ring), pulsing yellow, with Earth behind it. The rider and the mascot have
-# flown on.
+# ring), in the message's well-known colours, humming gently, with black
+# cube lines (the owner's call), and Earth behind it. The rider and the
+# mascot have flown on.
 #
 # The drop (bar 48) lands the astronaut back on the board at the human
 # figure, with the mascot flying beside it from then on, leaving little
@@ -359,7 +360,8 @@ func update(t: float) -> void:
 	var paper: Color = palette["paper"]
 	var ink: Color = palette["ink"]
 	var pulse: float = timeline.beat_pulse(t, 0.3) if t >= kick else 0.0
-	sculpture.update(t, _row_lit, pulse, paper.lerp(ink, 0.2), paper)
+	var finale := str(options.get("camera", "")) == "finale" and t >= _finale
+	sculpture.update(t, _row_lit, pulse, paper.lerp(ink, 0.2), paper, finale)
 	_set_edge_glow(t)
 	var mode := str(options.get("camera", ""))
 	var diving := mode.begins_with("fpv")

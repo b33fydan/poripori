@@ -23,9 +23,9 @@ The owner's draft read "Why do we want to heard?"; it is taken as "be heard".
 
 About 44 words in 20 seconds, a calm radio pace with a breath between lines. It plays over the reach: the rising take, FPV dive 1, the rising take again, FPV dive 2, and the start of the view over the mascot.
 
-## Captions
+## Captions (not used)
 
-`edits/film.captions.ass`, in the style of a transmission readout: Menlo bold, upper case, pale cream with a black outline, low on the left, each line typing itself in word by word. `python3 tools/burn_captions.py` burns them into a copy (`renders/film-captioned.mp4`); `film.mp4` stays clean, so the captions can be retimed to the recording without rendering again.
+The owner tried captions and took them out on 2026-10-04: the film has no text. The file is kept in case they come back. `edits/film.captions.ass`, in the style of a transmission readout: Menlo bold, upper case, pale cream with a black outline, low on the left, each line typing itself in word by word. `python3 tools/burn_captions.py` burns them into a copy (`renders/film-captioned.mp4`); `film.mp4` stays clean, so the captions can be retimed to the recording without rendering again.
 
 ## Making it sound like space
 
@@ -35,4 +35,4 @@ About 44 words in 20 seconds, a calm radio pace with a breath between lines. It 
 - the two Quindar tones NASA used to key its transmissions: a 2,525 Hz beep a quarter of a second long just before, and a 2,475 Hz beep just after;
 - the song ducked a few dB under the voice, and a limiter at the end so nothing clips.
 
-It writes `renders/<video>-voice.mp4`, the picture copied; the song file and the render are never modified. Run it on the clean film, then burn the captions onto that.
+It writes `renders/<video>-voice.mp4`, the picture copied; the song file and the render are never modified. Run it on `renders/film.mp4`.

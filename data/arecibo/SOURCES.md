@@ -48,3 +48,18 @@ All four were fetched on 2026-10-02. Each gives the same 1,679 bits (397 ones). 
 
 - **Still to source:** the 126 mm wavelength and the other facts that will appear on screen are listed with their sources in `docs/FACTS.md` as they're added.
 - **Not seen:** the primary paper's figure. The paper is Staff of the NAIC, "The Arecibo Message of November, 1974", *Icarus* 26, 462–466 (1975), doi:10.1016/0019-1035(75)90116-5. It's paywalled.
+
+## The original colours (the film's last shot)
+
+The transmitted message has no colours. The well-known coloured picture of it is Arne Nordmann's on Wikimedia Commons, `File:Arecibo_message.svg` (https://commons.wikimedia.org/wiki/File:Arecibo_message.svg, CC BY-SA 3.0 / GFDL; read 2026-10-03). Its SVG (https://upload.wikimedia.org/wikipedia/commons/5/55/Arecibo_message.svg, viewBox 25 × 75 with a one-square border) fills its squares in six colours, by rows:
+
+| Colour | Rows of the message (SVG y minus the border) | Parts |
+|---|---|---|
+| white `#FFF` | 0–71 | the numbers, the nucleotide count, the population |
+| purple `#AC0FC6` | 5–71 | the elements, and the telescope |
+| green `#10CE0E` | 11–29 | the nucleotide formulas |
+| blue `#0E72FF` | 31–72 | the double helix, the human's height, the telescope's size |
+| red `#E60718` | 45–51 | the human figure |
+| yellow `#F8FF11` | 56–59 | the Solar System |
+
+The row ranges were read from the SVG's paths (through WebFetch, so they're summaries, not a pixel check). The part each colour covers was matched to `sections.json`'s regions by those rows; each region's `original` holds its colour, with pure white toned to `#f4f6ff` so the screen doesn't clip. Only the colours are used, not the picture itself.

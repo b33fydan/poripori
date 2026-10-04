@@ -74,7 +74,8 @@ The owner's creative direction, as confirmed on 2026-10-02. The story is being b
 - **1:36, the touch:** the drop (bar 48, 95.27 s). The astronaut and the mascot touch hands as the beat kicks back in.
   - **Where the ring is:** while the reach plays, the ring descends to the human figure's feet (row 54.6). The rider is moved round the ring unseen, so the drop meets the monolith's front.
   - **From bar 48.5:** back on the ring in the human chapter's red, with the lit human figure towering, and the mascot flying beside him leaving little stars.
-- **The voice:** "Gervis", the owner's voice character, speaks like a radio transmission between astronauts. The first transmission, 1:09–1:29, is written and approved (`docs/VOICE.md`); the owner records and adds the voice in post (`tools/radio_voice.py` gives it the space-radio sound). Its words appear as captions, typing themselves in like a transmission readout (`edits/film.captions.ass`, burned onto a copy by `tools/burn_captions.py`).
+- **The voice:** "Gervis", the owner's voice character, speaks like a radio transmission between astronauts. The first transmission, 1:09–1:29, is written and approved (`docs/VOICE.md`); the owner records and adds the voice in post (`tools/radio_voice.py` gives it the space-radio sound).
+- **No text on screen (owner's call, 2026-10-04):** the captions were tried and removed. The film carries no words; `edits/film.captions.ass` and `tools/burn_captions.py` stay in the repo, unused.
 
 ## The rest of the story (owner's outline, 2026-10-03; built the same day)
 
@@ -93,7 +94,7 @@ Each chapter of the message gets a hyperlapse B-roll on a floating platform in t
 | 2:23–2:43 | 72–82 | Solar System FPV (`broll_solar.gd`); the Sun flares on the peak at 2:39 |
 | 2:43–3:02 | 82–92 | The telescope (`broll_telescope.gd`): built on the peak, the floor falls to Puerto Rico as the music drops at 2:51, the beam at 2:57 |
 | 3:02–3:08 | 92–95 | The crew surfs away with their mascots (`finale.gd`), on the outro's swell |
-| 3:08–3:12 | 95–end | The whole monolith, lit and pulsing, Earth behind (`opening.gd camera=finale`) |
+| 3:08–3:12 | 95–end | The whole monolith in its original colours, humming, Earth behind (`opening.gd camera=finale`) |
 
 The last shot starts at bar 95 rather than 96 as first proposed: from bar 96 the song is only 1.8 s of near silence.
 
@@ -109,6 +110,7 @@ The last shot starts at bar 95 rather than 96 as first proposed: from bar 96 the
   - the telescope shoots a beam of light up, and every astronaut grabs a board and flies up after it;
   - Astro appears, surfing up through the galaxy with the mascot. The astronauts follow behind, each with its own mascot, and they all vanish into the horizon.
 - **The last shot:** the monolith floating, pulsing with bright colours, with Earth in the background.
+  - As finished (owner's call, 2026-10-04): the message in its well-known colours, from the coloured picture on Wikimedia Commons (white numbers, purple elements and telescope, green formulas, a blue helix, a red human, a yellow Solar System; `data/arecibo/SOURCES.md`). The cubes' faces hum gently, a slow swell of brightness rolling down the rows every 1.6 s, and their lines are black (rims and outlines). No yellow pulse and no lights pattern in this shot.
 
 ## The mascot
 

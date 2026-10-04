@@ -1,5 +1,5 @@
 {
- "about": "Regions of the Arecibo Message picture (73 rows x 23 columns, row 0 at the top, column 0 on the left as in today's standard picture). Each lit cell belongs to the first region whose rows [r0, r1) and columns [c0, c1) contain it. Regions are worked out from the bits (see SOURCES.md) and agree with the grouping of the coloured Wikimedia Commons version. Chapters group regions in reading order, top to bottom, for the story. The colours are this film's; the transmitted message has none.",
+ "about": "Regions of the Arecibo Message picture (73 rows x 23 columns, row 0 at the top, column 0 on the left as in today's standard picture). Each lit cell belongs to the first region whose rows [r0, r1) and columns [c0, c1) contain it. Regions are worked out from the bits (see SOURCES.md) and agree with the grouping of the coloured Wikimedia Commons version. Chapters group regions in reading order, top to bottom, for the story. The colours are this film's; the transmitted message has none. Each region's 'original' is its colour in the coloured version on Wikimedia Commons (File:Arecibo_message.svg, by Arne Nordmann; see SOURCES.md), with its pure white toned to #f4f6ff; the film's last shot wears these.",
  "chapters": [
   {"key": "numbers", "title": "The numbers 1 to 10"},
   {"key": "elements", "title": "Hydrogen, carbon, nitrogen, oxygen, phosphorus"},
@@ -10,18 +10,18 @@
   {"key": "telescope", "title": "The Arecibo telescope and its size"}
  ],
  "regions": [
-  {"name": "height", "chapter": "human", "rows": [45, 55], "columns": [0, 5], "color": "#8fd0ff"},
-  {"name": "population", "chapter": "human", "rows": [48, 54], "columns": [16, 23], "color": "#f4f6ff"},
-  {"name": "nucleotide_count", "chapter": "dna", "rows": [26, 43], "columns": [10, 12], "color": "#f4f6ff"},
-  {"name": "helix_end_left", "chapter": "dna", "rows": [45, 46], "columns": [6, 9], "color": "#5ab4ff"},
-  {"name": "helix_end_right", "chapter": "dna", "rows": [45, 46], "columns": [12, 14], "color": "#5ab4ff"},
-  {"name": "human", "chapter": "human", "rows": [45, 55], "columns": [5, 16], "color": "#ff6464"},
-  {"name": "helix", "chapter": "dna", "rows": [30, 45], "columns": [0, 23], "color": "#5ab4ff"},
-  {"name": "formulas", "chapter": "formulas", "rows": [11, 30], "columns": [0, 23], "color": "#6ef09c"},
-  {"name": "elements", "chapter": "elements", "rows": [5, 10], "columns": [0, 23], "color": "#b59cff"},
-  {"name": "numbers", "chapter": "numbers", "rows": [0, 4], "columns": [0, 23], "color": "#f4f6ff"},
-  {"name": "solar_system", "chapter": "solar_system", "rows": [56, 60], "columns": [0, 23], "color": "#ffd36b"},
-  {"name": "telescope", "chapter": "telescope", "rows": [60, 71], "columns": [0, 23], "color": "#c98bff"},
-  {"name": "telescope_size", "chapter": "telescope", "rows": [71, 73], "columns": [0, 23], "color": "#8fd0ff"}
+  {"name": "height", "chapter": "human", "rows": [45, 55], "columns": [0, 5], "color": "#8fd0ff", "original": "#0e72ff"},
+  {"name": "population", "chapter": "human", "rows": [48, 54], "columns": [16, 23], "color": "#f4f6ff", "original": "#f4f6ff"},
+  {"name": "nucleotide_count", "chapter": "dna", "rows": [26, 43], "columns": [10, 12], "color": "#f4f6ff", "original": "#f4f6ff"},
+  {"name": "helix_end_left", "chapter": "dna", "rows": [45, 46], "columns": [6, 9], "color": "#5ab4ff", "original": "#0e72ff"},
+  {"name": "helix_end_right", "chapter": "dna", "rows": [45, 46], "columns": [12, 14], "color": "#5ab4ff", "original": "#0e72ff"},
+  {"name": "human", "chapter": "human", "rows": [45, 55], "columns": [5, 16], "color": "#ff6464", "original": "#e60718"},
+  {"name": "helix", "chapter": "dna", "rows": [30, 45], "columns": [0, 23], "color": "#5ab4ff", "original": "#0e72ff"},
+  {"name": "formulas", "chapter": "formulas", "rows": [11, 30], "columns": [0, 23], "color": "#6ef09c", "original": "#10ce0e"},
+  {"name": "elements", "chapter": "elements", "rows": [5, 10], "columns": [0, 23], "color": "#b59cff", "original": "#ac0fc6"},
+  {"name": "numbers", "chapter": "numbers", "rows": [0, 4], "columns": [0, 23], "color": "#f4f6ff", "original": "#f4f6ff"},
+  {"name": "solar_system", "chapter": "solar_system", "rows": [56, 60], "columns": [0, 23], "color": "#ffd36b", "original": "#f8ff11"},
+  {"name": "telescope", "chapter": "telescope", "rows": [60, 71], "columns": [0, 23], "color": "#c98bff", "original": "#ac0fc6"},
+  {"name": "telescope_size", "chapter": "telescope", "rows": [71, 73], "columns": [0, 23], "color": "#8fd0ff", "original": "#0e72ff"}
  ]
 }
