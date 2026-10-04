@@ -463,7 +463,12 @@ func _place_camera(t: float, rig: Transform3D) -> void:
 
 # The lit monolith's rims and outlines: every cube's together, in yellow,
 # flaring on the beat and easing to a glow. Nothing is lit before the kick.
+# Through them runs a pattern of black, like strings of Christmas lights
+# (the owner's idea), changing every phrase: a diagonal sweep, bands falling
+# down the rows, twinkling, rings rippling out from the middle.
 func _set_edge_glow(t: float) -> void:
+	var phrase := floori(timeline.bar(t) / 4.0)
+	RenderingServer.global_shader_parameter_set("monolith_pattern", Vector4(float(posmod(phrase, 4)), timeline.beat(t), 0.0, 1.0 if t >= kick else 0.0))
 	var flare: float = timeline.beat_pulse(t, 0.35)
 	var color := EDGE_YELLOW.srgb_to_linear()
 	var strength := (0.55 + 0.45 * flare) * smoothstep(kick - 0.05, kick + 0.3, t)

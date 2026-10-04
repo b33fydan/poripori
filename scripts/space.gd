@@ -1,7 +1,7 @@
 class_name Space
 extends Node3D
 
-# The night, printed: the sky shader lays down paper and a galaxy band;
+# The night, printed: the sky shader lays down black and a grey galaxy band;
 # voxel stars ride with the camera like the sky does, and dust streams past
 # to show speed and depth. There are no scene lights: every
 # surface takes its tones from the print shaders and the global palette.
@@ -14,6 +14,9 @@ const DUST := 330          # 300, plus 10% more at half size for depth
 const SMALL_DUST_FROM := 300
 const DUST_BOX := Vector3(70.0, 50.0, 90.0)
 const BAND_NORMAL := Vector3(0.35, 0.82, -0.45)  # the galaxy band's, as print_sky.gdshader has it
+const STAR_COOL := Color("#dfe7fb")
+const STAR_WARM := Color("#fbefd8")
+const DUST_COLOR := Color("#c9cdd8")
 
 var environment: Environment
 var sky_material: ShaderMaterial
@@ -106,10 +109,11 @@ func update(t: float, camera_position: Vector3, ink: Color, accent: Color, pulse
 		var direction: Vector3 = star[0]
 		var spin := Basis(Vector3(0.3, 1.0, 0.2).normalized(), float(star[3]))
 		_stars.set_instance_transform(i, Transform3D(spin.scaled(Vector3.ONE * float(star[1]) * twinkle * beat), direction * FAR_RADIUS))
-		var color := ink.lerp(accent, float(star[4]) * 0.5).srgb_to_linear()
+		# Stars keep their own colours, a little warm or cool, never the chapter's.
+		var color := STAR_COOL.lerp(STAR_WARM, float(star[4])).srgb_to_linear()
 		color.a = 1.0
 		_stars.set_instance_color(i, color)
-	var dust_color := ink.srgb_to_linear()
+	var dust_color := DUST_COLOR.srgb_to_linear()
 	dust_color.a = 1.0
 	var corner := camera_position - DUST_BOX * 0.5
 	for i in range(DUST):

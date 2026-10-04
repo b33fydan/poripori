@@ -92,11 +92,20 @@ static func rim_cubes(parent: Node, size: float, count: int) -> MultiMesh:
 # One cube: `color` (sRGB), `pulse` true for a yellow pulsing rim (a placed
 # cube), false for a steady white border; `flat` prints it flat and bright.
 static func set_cube(mm: MultiMesh, i: int, xf: Transform3D, color: Color, pulse: bool, flat := false) -> void:
+	_put_cube(mm, i, xf, color, 1.0 if pulse else 0.0, flat)
+
+
+# One cube with a steady black border (the planets).
+static func set_cube_black(mm: MultiMesh, i: int, xf: Transform3D, color: Color, flat := false) -> void:
+	_put_cube(mm, i, xf, color, 2.0, flat)
+
+
+static func _put_cube(mm: MultiMesh, i: int, xf: Transform3D, color: Color, kind: float, flat: bool) -> void:
 	mm.set_instance_transform(i, xf)
 	var c := color.srgb_to_linear()
 	c.a = 1.0 if flat else 0.0
 	mm.set_instance_color(i, c)
-	mm.set_instance_custom_data(i, Color(1.0, 1.0 if pulse else 0.0, 0.0, 0.0))
+	mm.set_instance_custom_data(i, Color(1.0, kind, 0.0, 0.0))
 
 
 static func hide_cube(mm: MultiMesh, i: int) -> void:

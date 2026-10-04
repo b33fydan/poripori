@@ -7,8 +7,9 @@ extends Node3D
 # Sun. At each planet a little crew on a floating slab is assembling it,
 # cubes streaming from their hands into its shell, so each is finished just
 # as the drone passes. On bar 80 (the song's peak) the Sun flares, and the
-# crew round it rush in and jump for joy. The weave is smooth: gentle
-# curves and a light bank, never a snap.
+# crew round it rush in and jump for joy. The flight is smooth: one long
+# gentle sway, the view turning slowly, never a snap. The planets' cubes
+# wear black borders.
 #
 # The planets are stylized (sizes and colours to be recognised, not to
 # scale); only their order is the real one.
@@ -210,7 +211,7 @@ func update(t: float) -> void:
 			var u := age / fly
 			p = hands.lerp(p, u) + Vector3.UP * 1.2 * 4.0 * u * (1.0 - u)
 		var pop := 1.0 + 0.3 * exp(-maxf(age - fly, 0.0) * 10.0) * float(age >= fly)
-		Kit.set_cube(_cubes, c, Transform3D(Basis().scaled(Vector3.ONE * pop), p), cell[2], age >= fly)
+		Kit.set_cube_black(_cubes, c, Transform3D(Basis().scaled(Vector3.ONE * pop), p), cell[2])
 	_pose_crews(t)
 	_pose_ring_crew(t)
 	_place_rays(t, after)
@@ -283,40 +284,29 @@ func _place_rays(t: float, after: float) -> void:
 # rising a little, the crew in the foreground.
 func _drone(t: float) -> Vector3:
 	var x := _drone_x(t)
-	var z := 0.0
-	var y := 0.4
-	# Away from whichever planets are near, smoothly.
-	for i in range(PLANETS.size()):
-		var c: Vector3 = _centres[i]
-		var w := exp(-pow((x - c.x) / 6.0, 2.0))
-		z -= float(PLANETS[i][3]) * 2.0 * w
-		y += float(PLANETS[i][4]) * 0.4 * w
-	var hold := smoothstep(flare - 1.0, end, t)
-	y = lerpf(y, 2.0, hold)
-	return Vector3(x, y, z)
+	# One long, gentle sway, away from each planet as it passes (they sit on
+	# alternate sides): its heading never turns more than about 12 degrees.
+	# Gaussian swerves round each planet, and glancing at it, turned too
+	# sharply (the owner found it hard on the eyes).
+	var spacing := SPEED * PASS_EVERY
+	var first: Vector3 = _centres[0]
+	var sway := cos(PI * (first.x - x) / spacing)
+	var z := -float(PLANETS[0][3]) * 1.0 * sway
+	var y := 0.4 + 0.25 * sin(PI * (first.x - x) / (spacing * 2.0))
+	var hold := smoothstep(flare - 2.0, end, t)
+	return Vector3(x, lerpf(y, 2.0, hold), lerpf(z, 0.0, hold))
 
 
+# The camera looks along its own path, measured over more than a second so
+# the view turns slowly; no bank. Braking, it turns to the Sun.
 func _place_camera(t: float) -> void:
 	var p := _drone(t)
-	var ahead := _drone(t + 0.25)
-	var behind := _drone(t - 0.25)
-	var forward := (ahead - behind)
-	if forward.length() < 0.2:
+	var forward := _drone(t + 0.9) - _drone(t - 0.3)
+	if forward.length() < 0.5:
 		forward = Vector3.LEFT
 	forward = forward.normalized()
-	# Glancing toward the planet coming up, so each stays in frame as it
-	# passes; once braking, look at the Sun.
-	var glance := Vector3.ZERO
-	for i in range(PLANETS.size()):
-		var c: Vector3 = _centres[i]
-		var ahead_by := p.x - c.x
-		if ahead_by > -2.0:
-			glance += (c - p).normalized() * exp(-pow((ahead_by - 6.0) / 7.0, 2.0))
-	var settle := smoothstep(flare - 2.2, flare - 0.2, t)
-	var look := (forward + glance * 0.45).normalized()
-	look = look.lerp((_sun_centre - p).normalized(), settle).normalized()
-	var bend := (ahead - 2.0 * p + behind)
-	var side := look.cross(Vector3.UP).normalized()
-	var bank := clampf(bend.dot(side) * 0.5, -0.18, 0.18) * (1.0 - settle)
-	camera.fov = lerpf(78.0, 64.0, settle)
-	camera.look_at_from_position(p, p + look * 10.0, Vector3.UP.rotated(look, bank))
+	var settle := smoothstep(flare - 2.4, flare, t)
+	settle = settle * settle * (3.0 - 2.0 * settle)
+	var look := forward.lerp((_sun_centre - p).normalized(), settle).normalized()
+	camera.fov = lerpf(80.0, 64.0, settle)
+	camera.look_at_from_position(p, p + look * 10.0, Vector3.UP)

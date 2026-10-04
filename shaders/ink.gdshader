@@ -7,8 +7,10 @@ render_mode unshaded, depth_draw_never, depth_test_disabled, cull_disabled, fog_
 // its Laplacian, which is zero across any flat surface at any angle, so the
 // ring's long grazing plane stays clean.
 //
-// The lit monolith marks its pixels with roughness 0.2 (shaders/
-// monolith.gdshader); its outlines take the colour of monolith_edge.
+// Surfaces can ask for outlines of their own through roughness, which the
+// print look never otherwise uses: 0.2 takes the colour of monolith_edge (the
+// lit monolith's yellow, shaders/monolith.gdshader), 0.5 is black (black
+// borders: the B-roll's trees, the planets, the dark beats of the lights).
 
 #include "res://shaders/print.gdshaderinc"
 
@@ -49,21 +51,33 @@ void fragment() {
 			nearest_uv = SCREEN_UV + offsets[i];
 		}
 	}
-	float edge = smoothstep(depth_edge, depth_edge * 2.0, abs(sum - 4.0 * dc) / max(nearest, 1e-7));
+	float silhouette = smoothstep(depth_edge, depth_edge * 2.0, abs(sum - 4.0 * dc) / max(nearest, 1e-7));
+	float crease = 0.0;
 	if (dc > 0.0) {
 		vec3 nc = normal_at(SCREEN_UV);
 		for (int i = 0; i < 4; i++) {
 			if (texture(depth_tex, SCREEN_UV + offsets[i]).r > 0.0) {
 				float turn = 1.0 - dot(nc, normal_at(SCREEN_UV + offsets[i]));
-				edge = max(edge, smoothstep(normal_edge, normal_edge * 1.6, turn));
+				crease = max(crease, smoothstep(normal_edge, normal_edge * 1.6, turn));
 			}
 		}
 	}
+	float edge = max(silhouette, crease);
 	vec3 scene = texture(screen_tex, SCREEN_UV).rgb;
 	vec3 line = mix(ink.rgb, paper.rgb, 0.25);
 	// The line belongs to the nearest surface at it.
-	if (monolith_edge.a > 0.0 && nearest > 0.0 && abs(roughness_at(nearest_uv) - 0.2) < 0.08) {
-		line = mix(line, monolith_edge.rgb, clamp(monolith_edge.a * 1.4, 0.0, 1.0));
+	float amount = strength;
+	if (nearest > 0.0) {
+		float mark = roughness_at(nearest_uv);
+		if (monolith_edge.a > 0.0 && abs(mark - 0.2) < 0.08) {
+			line = mix(line, monolith_edge.rgb, clamp(monolith_edge.a * 1.4, 0.0, 1.0));
+		} else if (abs(mark - 0.5) < 0.08) {
+			// Black: full at the silhouette, softer along inner creases, so
+			// fine voxel work (a dense tree far off) doesn't fill in black.
+			line = vec3(0.0);
+			edge = max(silhouette, crease * 0.45);
+			amount = 1.0;
+		}
 	}
-	ALBEDO = mix(scene, line, edge * strength);
+	ALBEDO = mix(scene, line, edge * amount);
 }

@@ -17,6 +17,8 @@ uniform vec4 tint = vec4(1.0);
 // print flat); they set this false and choose with `flat_amount` instead.
 uniform bool vertex_flat = true;
 uniform float flat_amount = 0.0;
+// 0.5 asks the ink pass for black outlines (shaders/ink.gdshader).
+uniform float outline_mark = 1.0;
 
 void fragment() {
 	vec3 base = COLOR.rgb * tint.rgb;
@@ -24,5 +26,5 @@ void fragment() {
 	vec3 c = mix(base, shade, halftone(FRAGCOORD.xy, print_coverage(NORMAL, VIEW_MATRIX)));
 	ALBEDO = vec3(0.0);
 	EMISSION = mix(c, base, vertex_flat ? COLOR.a : flat_amount);
-	ROUGHNESS = 1.0;
+	ROUGHNESS = outline_mark;
 }

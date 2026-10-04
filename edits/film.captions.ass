@@ -1,0 +1,25 @@
+[Script Info]
+; The film's captions: the Gervis transmission at 1:09-1:29 (the owner's
+; script, approved 2026-10-03; docs/VOICE.md). Times are song time. Each
+; line types itself in word by word, like a transmission coming through (\ko
+; hides each word, outline and all, until its turn; no shadow, which would
+; show the words early).
+; Burned in by tools/burn_captions.py, onto a copy; film.mp4 stays clean.
+Title: Arecibo captions
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Radio,Menlo,46,&H00E6F0F2,&HFF000000,&H00000000,&HFF000000,-1,0,0,0,100,100,3,0,1,3.2,0,2,160,160,96,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:01:09.20,0:01:11.60,Radio,,0,0,0,,{\fad(80,220)}{\ko28}WHAT {\ko14}IS {\ko14}A {\ko40}MESSAGE?
+Dialogue: 0,0:01:11.90,0:01:14.50,Radio,,0,0,0,,{\fad(80,220)}{\ko20}WHY {\ko12}DO {\ko12}WE {\ko22}WANT {\ko12}TO {\ko12}BE {\ko40}HEARD?
+Dialogue: 0,0:01:15.00,0:01:20.40,Radio,,0,0,0,,{\fad(80,260)}{\ko10}A {\ko38}MESSAGE {\ko12}IS {\ko8}A {\ko24}PIECE {\ko10}OF {\ko40}US,\N{\ko30}SENT {\ko20}INTO {\ko12}THE {\ko40}DARK, {\ko45}TRUSTING {\ko36}SOMEONE {\ko18}WILL {\ko28}CATCH {\ko30}IT.
+Dialogue: 0,0:01:20.90,0:01:26.20,Radio,,0,0,0,,{\fad(80,260)}{\ko14}WE {\ko24}WANT {\ko12}TO {\ko12}BE {\ko34}HEARD {\ko45}BECAUSE\N{\ko30}BEING {\ko32}HEARD {\ko30}MEANS {\ko14}WE {\ko16}ARE {\ko22}NOT {\ko45}ALONE.
+Dialogue: 0,0:01:26.80,0:01:29.00,Radio,,0,0,0,,{\fad(80,300)}{\ko20}SO {\ko22}HERE {\ko18}IS {\ko50}OURS.

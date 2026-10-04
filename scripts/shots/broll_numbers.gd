@@ -145,11 +145,13 @@ func _build_island() -> void:
 	add_child(island)
 
 
+# The models' own shades onto a ramp in the palette, kept off the palest
+# end so the trees don't wash out (they wear black borders too).
 func _recolor(c: Color) -> Color:
 	var l := c.get_luminance()
 	if l < 0.4:
-		return _tone("paper", "accent", 0.3 + 0.5 * l / 0.4)
-	return _tone("accent", "ink", (l - 0.4) / 0.6 * 0.7)
+		return _tone("paper", "accent", 0.25 + 0.55 * l / 0.4)
+	return _tone("accent", "ink", (l - 0.4) / 0.6 * 0.4)
 
 
 func _build_props() -> void:
@@ -157,7 +159,7 @@ func _build_props() -> void:
 		var model: Node3D = MegavoxScript.load_model(str(prop[0]), str(prop[1]))
 		if model == null:
 			continue
-		MegavoxScript.print_look(model, _recolor)
+		MegavoxScript.print_look(model, _recolor, true)  # black borders: pale trees looked washed out
 		var holder: Node3D = MegavoxScript.stand(model, float(prop[2]))
 		holder.position = prop[3]
 		holder.rotation.y = _hash(int(holder.position.x * 10.0), int(holder.position.z * 10.0)) * TAU

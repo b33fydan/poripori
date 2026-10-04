@@ -11,6 +11,8 @@ extends RefCounted
 # Every shader reads the palette from global shader parameters (declared in
 # project.godot), set here once a frame.
 
+const NIGHT_SHADE := Color("#0b0c12")
+
 const PALETTES := {
 	"intro": {"paper": "#0a0e2a", "ink": "#aab6ee", "accent": "#7d90e6"},
 	# The message's numbers are white; a full white ring blew out the frame,
@@ -45,9 +47,10 @@ static func colors(palette: String) -> Dictionary:
 	var entry: Dictionary = PALETTES[palette]
 	for role in ["paper", "ink", "accent"]:
 		out[role] = Color(str(entry[role]))
-	# Shade falls toward the paper at night; light-paper palettes name a
-	# darker shadow instead.
-	out["shadow"] = Color(str(entry["shadow"])) if entry.has("shadow") else out["paper"]
+	# Shade falls toward a neutral near-black at night (falling toward the
+	# tinted paper spread the chapter's hue over everything); light-paper
+	# palettes name a darker shadow instead.
+	out["shadow"] = Color(str(entry["shadow"])) if entry.has("shadow") else NIGHT_SHADE
 	return out
 
 

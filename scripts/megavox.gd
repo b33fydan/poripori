@@ -20,8 +20,9 @@ static func load_model(category: String, file: String) -> Node3D:
 
 
 # Every surface gets the print shader, its colour passed through `recolor`
-# (Color -> Color, sRGB in and out).
-static func print_look(node: Node, recolor: Callable) -> void:
+# (Color -> Color, sRGB in and out). `black_outline` asks for black ink
+# lines round it and along its voxel edges.
+static func print_look(node: Node, recolor: Callable, black_outline := false) -> void:
 	if node is MeshInstance3D:
 		var mesh_instance := node as MeshInstance3D
 		for surface in range(mesh_instance.mesh.get_surface_count()):
@@ -33,9 +34,11 @@ static func print_look(node: Node, recolor: Callable) -> void:
 			material.shader = PrintShader
 			var linear: Color = (recolor.call(albedo) as Color).srgb_to_linear()
 			material.set_shader_parameter("tint", Vector4(linear.r, linear.g, linear.b, 1.0))
+			if black_outline:
+				material.set_shader_parameter("outline_mark", 0.5)
 			mesh_instance.set_surface_override_material(surface, material)
 	for child in node.get_children():
-		print_look(child, recolor)
+		print_look(child, recolor, black_outline)
 
 
 # The model's bounds in its own space, from every mesh under it.

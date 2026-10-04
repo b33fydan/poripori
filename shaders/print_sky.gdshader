@@ -1,8 +1,9 @@
 shader_type sky;
 
-// The night as a printed page: flat paper and a galaxy band laid down in
-// halftone dots of the chapter's accent (soft clouds with dither off).
-// Nothing here reads TIME.
+// The night as a printed page: black, with a galaxy band of soft neutral
+// grey clouds (halftone dots with dither on). The sky stays black in every
+// scene whatever the chapter's colour (the owner's call: tinted skies
+// flooded the whole frame with the chapter's hue). Nothing here reads TIME.
 
 #include "res://shaders/print.gdshaderinc"
 
@@ -15,6 +16,8 @@ uniform float band_width = 0.22;
 // faint at night in the film; brighter where the galaxy itself is the set.
 uniform float band_glow = 0.32;
 uniform float band_cover = 0.45;
+uniform vec3 night = vec3(0.0012, 0.0014, 0.0022);    // linear: all but black
+uniform vec3 band_tint = vec3(0.30, 0.32, 0.38);     // linear: the clouds' grey
 
 float hash13(vec3 p) {
 	p = fract(p * 0.1031);
@@ -45,11 +48,11 @@ float fbm(vec3 p) {
 
 void sky() {
 	vec3 d = normalize(EYEDIR);
-	vec3 col = paper.rgb;
+	vec3 col = night;
 	float along = abs(dot(d, normalize(band_normal)));
 	float band = exp(-pow(along / band_width, 2.0));
 	float clouds = smoothstep(0.42, 0.78, fbm(d * 3.2 + drift));
 	float cover = clamp(band * (0.03 + 0.4 * clouds) * band_cover / 0.45, 0.0, band_cover);
-	col = mix(col, mix(paper.rgb, accent.rgb, band_glow), halftone(FRAGCOORD.xy, cover));
+	col = mix(col, mix(night, band_tint, band_glow), halftone(FRAGCOORD.xy, cover));
 	COLOR = col;
 }
